@@ -55,7 +55,7 @@ def main():
                 if len(player_clicks) == 1:  # first click
                     HIGHLIGHTED_FIELDS[(col, row)] = p.Color("black")  # highlight the clicked field
                 elif len(player_clicks) == 2:  # second click
-                    validMoves = gs.getValidMoves(player_clicks[0])
+                    validMoves = gs.getPossibleMoves(player_clicks[0])
                     #  iterate valid moves, if the move that the player selected is among them, execute the move
                     for move in validMoves:
                         if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
@@ -71,7 +71,7 @@ def main():
             elif e.type == p.MOUSEMOTION:
                 (col, row) = getSquareUnderCursor()
                 if len(player_clicks) == 0:
-                    validMoves = gs.getValidMoves((col, row))
+                    validMoves = gs.getPossibleMoves((col, row))
                     HIGHLIGHTED_MOVES = validMoves
 
             elif e.type == p.KEYDOWN:

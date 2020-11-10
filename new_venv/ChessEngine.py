@@ -28,28 +28,31 @@ class GameState:
         ]
         self.whiteToMove = True
         self.moveLog = []
+        self.possibleMoves = []
         self.enPassantSquare = None  # here a tuple should be stored representing the square a pawn omitted so that an
         # opponent's pawn can capture this pawn via en passant by checking if this variable is set
         # it is reset to None in the very next move because en passant is only allowed immediately
+        self.updatePossibleMoves()
 
-    def getValidMoves(self, fromSq):
+    def calculatePossibleMoves(self, fromSq):
         """
         This function determines all valid moves from a given square on this board with regards to the current state of
-        the board. If the from-square is a vacant field it returns an empty list.
+        the board. If the from-square is a vacant field it returns an empty list. It should not be called outside the
+        object. Instead, getPossibleMoves should be called, so the moves don't have to be calculated again.
         :param fromSq: given square, e.g. (4, 5)
         :type fromSq: tuple
         :return: a list of ChessEngine.Move Objects which are valid moves from the
         given square on this board
         :rtype: list
         """
-        validMoves = []
+        possibleMoves = []
         fromCol = fromSq[0]
         fromRow = fromSq[1]
         pieceMoved = self.board[fromRow][fromCol]
 
         # opponent's piece or vacant
         if pieceMoved[0] != ('w' if self.whiteToMove else 'b'):
-            return validMoves
+            return possibleMoves
 
         # Pawn
         elif pieceMoved[1] == 'p':
@@ -59,7 +62,7 @@ class GameState:
                 rowInFrontOfPawn = fromRow - 1 if pieceMoved[0] == 'w' else fromRow + 1
                 pieceInFrontOfPawn = self.board[rowInFrontOfPawn][fromCol]
                 if pieceInFrontOfPawn == "--":
-                    validMoves.append(Move(fromSq, (fromCol, rowInFrontOfPawn), self.board))
+                    possibleMoves.append(Move(fromSq, (fromCol, rowInFrontOfPawn), self.board))
                 # add the two fields diagonally in front of the pawn if they have an opponent's piece on it
                 # or if they are vacant and an en passant is possible
                 for direction in (-1, 1):
@@ -67,11 +70,11 @@ class GameState:
                         continue
                     # check if they have an opponent's piece on it
                     if self.board[rowInFrontOfPawn][fromCol + direction][0][0] not in (pieceMoved[0], '-'):
-                        validMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn), self.board))
+                        possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn), self.board))
                     # check if an en passant is possible
                     if self.board[rowInFrontOfPawn][fromCol + direction] == "--" and \
                             (fromCol + direction, rowInFrontOfPawn) == self.enPassantSquare:
-                        validMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn),
+                        possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn),
                                                self.board, enPassant=True))
                 # if the pawn is on the start row, add the field two steps ahead of it, if the two fields in front of
                 # the pawn are vacant
@@ -79,7 +82,7 @@ class GameState:
                     rowTwoAheadOfPawn = fromRow - 2 if pieceMoved[0] == 'w' else fromRow + 2
                     pieceTwoAheadOfPawn = self.board[rowTwoAheadOfPawn][fromCol]
                     if pieceInFrontOfPawn == pieceTwoAheadOfPawn == "--":
-                        validMoves.append(Move(fromSq, (fromCol, rowTwoAheadOfPawn), self.board))
+                        possibleMoves.append(Move(fromSq, (fromCol, rowTwoAheadOfPawn), self.board))
 
         # Rook
         elif pieceMoved[1] == 'R':
@@ -96,7 +99,7 @@ class GameState:
                     # check if there is a piece from the same color as the Rook
                     if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
                         break
-                    validMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
+                    possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
                     # check if collision with opponent's piece
                     if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
                         break
@@ -115,7 +118,7 @@ class GameState:
                         continue
                     # assure that there is not a piece from the same color as the knight
                     if self.board[row][col][0] != pieceMoved[0]:
-                        validMoves.append(Move(fromSq, (col, row), self.board))
+                        possibleMoves.append(Move(fromSq, (col, row), self.board))
 
         # Bishop
         elif pieceMoved[1] == 'B':
@@ -133,7 +136,7 @@ class GameState:
                         # check if collision with own piece
                         if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
                             break
-                        validMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
+                        possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
                         # check if collision with opponent's piece
                         if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
                             break
@@ -155,7 +158,7 @@ class GameState:
                         # check if there is a piece from the same color as the Rook
                         if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
                             break
-                        validMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
+                        possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
                         # check if collision with opponent's piece
                         if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
                             break
@@ -175,14 +178,35 @@ class GameState:
                     # check if there is a piece from the same color as the King
                     if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
                         continue
-                    validMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
+                    possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self.board))
 
-        return validMoves
+        return possibleMoves
+
+    def updatePossibleMoves(self):
+        """
+        determines all the possible moves for each square on the board. and stores them. should only be called when a
+        move was made in order to save perfomance.
+        :return:
+        :rtype:
+        """
+        possibleMoves = []
+        for col in range(8):
+            for row in range(8):
+                possibleMoves += self.calculatePossibleMoves((col, row))
+        self.possibleMoves = possibleMoves
+
+    def getPossibleMoves(self, fromSq):
+        possibleMoves = []
+        for move in self.possibleMoves:
+            if move.fromSq == fromSq:
+                possibleMoves.append(move)
+        return possibleMoves
 
     def makeMove(self, move):
         """
         Executes a move and logs it, and changes which player's turn it is.
-        It also keeps track the enPassant variable.
+        Keeps track the enPassantSquare variable.
+        Calls updatePossibleMoves
         :param move: a Move object that should be executed
         :type : ChessEngine.Move
         :return:
@@ -199,6 +223,7 @@ class GameState:
             omittedRow = mean((move.fromRow, move.toRow))
             self.enPassantSquare = (move.fromCol, omittedRow)
         self.moveLog.append(move)
+        self.updatePossibleMoves()
 
     def undoMove(self):
         """
