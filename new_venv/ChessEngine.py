@@ -50,12 +50,12 @@ class GameState:
         fromRow = fromSq[1]
         pieceMoved = self.board[fromRow][fromCol]
 
-        # opponent's piece or vacant
-        if pieceMoved[0] != ('w' if self.whiteToMove else 'b'):
-            return possibleMoves
+        # # opponent's piece or vacant
+        # if (pieceMoved[0] != ('w' if self.whiteToMove else 'b')) != opponentsView:
+        #     return possibleMoves
 
         # Pawn
-        elif pieceMoved[1] == 'p':
+        if pieceMoved[1] == 'p':
             # check if pawn is not on the finish row
             if fromRow != (0 if pieceMoved[0] == 'w' else 7):
                 # add the field in front of the pawn if it is vacant
@@ -184,8 +184,8 @@ class GameState:
 
     def updatePossibleMoves(self):
         """
-        determines all the possible moves for each square on the board. and stores them. should only be called when a
-        move was made in order to save perfomance.
+        determines all the possible moves for each square on the board and stores them. should only be called when a
+        move was made in order to save perfomance. ignores check
         :return:
         :rtype:
         """
@@ -195,12 +195,12 @@ class GameState:
                 possibleMoves += self.calculatePossibleMoves((col, row))
         self.possibleMoves = possibleMoves
 
-    def getPossibleMoves(self, fromSq):
-        possibleMoves = []
+    def getValidMoves(self, fromSq):
+        validMoves = []
         for move in self.possibleMoves:
-            if move.fromSq == fromSq:
-                possibleMoves.append(move)
-        return possibleMoves
+            if move.fromSq == fromSq and ((move.pieceMoved[0] == 'w') == self.whiteToMove):
+                validMoves.append(move)
+        return validMoves
 
     def makeMove(self, move):
         """
@@ -223,7 +223,9 @@ class GameState:
             omittedRow = mean((move.fromRow, move.toRow))
             self.enPassantSquare = (move.fromCol, omittedRow)
         self.moveLog.append(move)
+        self.checkPawnPromotion()
         self.updatePossibleMoves()
+        print("CHECK =", self.isCheck())
 
     def undoMove(self):
         """
@@ -243,6 +245,26 @@ class GameState:
             else:
                 squareCapturedByEnpassant = move.toCol, move.toRow - 1
                 self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
+        self.updatePossibleMoves()
+
+    def checkPawnPromotion(self):
+        for c in range(8):
+            if self.board[0][c] == "wp":
+                self.board[0][c] = "wQ"
+            if self.board[7][c] == "bp":
+                self.board[7][c] = "bQ"
+
+    def isCheck(self):
+        """
+        :return: True if opponent (not current player) is checked. That means an illegal move happened before
+        :rtype: bool
+        """
+        # look at possible moves to see if we are checked
+        for move in self.possibleMoves:
+            if (move.pieceMoved[0] == 'w') == self.whiteToMove:  # check if opponent's piece
+                if move.pieceCaptured[1] == 'K' and move.pieceCaptured[0] != move.pieceMoved[0]:
+                    return True
+        return False
 
 
 class Move:
