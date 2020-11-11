@@ -9,6 +9,8 @@ import ChessEngine
 WIDTH = HEIGHT = 512
 CONTROL_PANE_WIDTH = 200
 CHECK_TEXT = "Check!"
+CHECKMATE_TEXT = "Checkmate!"
+STALEMATE_TEXT = "Stalemate!"
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15  # for animations later on
@@ -16,6 +18,9 @@ IMAGES = {}
 HIGHLIGHTED_FIELDS = {}  # {(col, row): (color, milliseconds, timeSet)}
 POINTER_PIECE = "--"
 BACKGROUND_COLOR = "white"
+FONT = None
+FONT_COLOR = "firebrick"
+LABEL_Y_POS = 100
 
 #REMOVE_HIGHLIGHT_EVENT = p.USEREVENT + 1
 
@@ -35,8 +40,9 @@ def main():
     """
     main driver, handle input and update graphics
     """
-    global POINTER_PIECE, HIGHLIGHTED_FIELDS
+    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT
     p.init()
+    FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
     screen = p.display.set_mode((WIDTH + CONTROL_PANE_WIDTH, HEIGHT))
     clock = p.time.Clock()
@@ -53,7 +59,8 @@ def main():
                 running = False
 
             elif e.type == p.MOUSEBUTTONDOWN:
-                clearHighlightedFields(p.Color("green"), p.Color("black"))
+                if not cursorOnBoard(screen):
+                    continue
                 (col, row) = getSquareUnderCursor()
                 POINTER_PIECE = gs.board[row][col]
                 if (POINTER_PIECE[0] == 'w') != gs.whiteToMove:
@@ -63,30 +70,47 @@ def main():
                     if not (col, row) in HIGHLIGHTED_FIELDS:
                         HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time())  # highlight the clicked field
                 elif len(player_clicks) == 2:  # second click
+                    clearHighlightedFields(p.Color("green"), p.Color("black"))
                     validMoves = gs.getValidMoves(player_clicks[0])
                     # iterate valid moves, if the move that the player selected is among them, execute the move
                     for move in validMoves:
                         if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
+                            # for more clarity in the code we call the now at turn player "player1" and the other
+                            # one "player2" within this scope
                             # player1 chose this move
-                            gs.makeMove(move)  # switch players turns -> now player2's turn
-                            p2CheckingMoves = gs.getCheckingMoves(currentPlayer=True)
-                            p1CheckingMoves = gs.getCheckingMoves(currentPlayer=False)
+                            gs.makeMove(move)  # make move and switch players
+                            # now player2 turn
+                            p2CheckingMoves = gs.getKingCapturingMoves(currentPlayer=True)  # the moves of p2 that check p1
+                            p1CheckingMoves = gs.getKingCapturingMoves(currentPlayer=False)  # the moves of p1 that check p2
                             if len(p2CheckingMoves) != 0:
-                                # player1 put themselves into check
-                                # undo move and switch back players -> now player1 turn
+                                # player1 has put themselves into check
+                                # undo move and switch back players
                                 gs.undoMove()
+                                # now player 1 at turn again
                                 # show player2's checking moves for 1 second
                                 addHighlightedFields(p2CheckingMoves, color=p.Color("red"), toSquareHighlight=False, milliseconds=1000)
                                 break
                             elif len(p1CheckingMoves) != 0:
-                                # player1 checked player2 and player2 is at turn
-                                blitCheckedLabel(True)
+                                # player1 checked or checkmated player 2
+                                # player2 is at turn
+                                if gs.isCheckmate():
+                                    # checkmate
+                                    blitCheckmateLabel()
+                                    # TODO what do after checkmate? let them continue or end the game?
+                                else:
+                                    # check
+                                    blitCheckLabel()
                                 # highlight all the player2 kings that are under attack
                                 addHighlightedFields(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
+                            # nobody is checked
+                            # but maybe it is stalemate
+                            elif gs.isStalemate():
+                                # stalemate
+                                blitStalemateLabel()
                             else:
-                                # nobody is checked
+                                # game may continue
                                 clearHighlightedFields()
-                                blitCheckedLabel(False)
+                                overrideLabels()
                             print(move)
                             break
                     #  reset the variables
@@ -97,18 +121,20 @@ def main():
                 if not cursorOnBoard(screen):
                     continue
                 (col, row) = getSquareUnderCursor()
-                if not ((gs.board[row][col][0] == 'w') == gs.whiteToMove):
-                    # do nothing if user hovers over opponent's pieces
-                    continue
                 if len(player_clicks) == 0:
-                    validMoves = gs.getValidMoves((col, row))
                     clearHighlightedFields(p.Color("green"))
+                    validMoves = gs.getValidMoves((col, row))
                     addHighlightedFields(validMoves, p.Color("green"), fromSquareHighlight=False)
+                    continue
+                elif not ((gs.board[row][col][0] == 'w') == gs.whiteToMove):
+                    # do nothing if user hovers over opponent's pieces
                     continue
 
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
                     gs.undoMove()
+                    clearHighlightedFields()
+                    overrideLabels()
 
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -123,6 +149,7 @@ def drawGameState(screen, gs):
     :param screen: the screen to draw on
     :type screen: surface
     """
+    screen.fill(BACKGROUND_COLOR)
     drawBoard(screen)
     drawPieces(screen, gs.board)
     updateHighlightings(screen)
@@ -244,22 +271,49 @@ def getSquareUnderCursor():
     return col, row
 
 
-def blitCheckedLabel(visible):
-    font = p.font.SysFont("monospace", 20, bold=True)
+def blitCheckLabel():
     x = (WIDTH + CONTROL_PANE_WIDTH//2)
-    y = 100
-    h = font.size(CHECK_TEXT)[1]
-    w = font.size(CHECK_TEXT)[0]
+    y = LABEL_Y_POS
+    h = FONT.size(CHECK_TEXT)[1]
+    w = FONT.size(CHECK_TEXT)[0]
     screen = p.display.get_surface()
     x_center = x - w//2
     y_center = y - h//2
-    if not visible:
-        screen.fill(BACKGROUND_COLOR, p.Rect(x_center, y_center, w, h))
-        return
-    color = p.Color("firebrick")
-    antialias = visible
-    label = font.render(CHECK_TEXT, antialias, color)
+    color = p.Color(FONT_COLOR)
+    label = FONT.render(CHECK_TEXT, True, color)
     screen.blit(label, (x_center, y_center))
+
+
+def blitCheckmateLabel():
+    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    y = LABEL_Y_POS
+    h = FONT.size(CHECKMATE_TEXT)[1]
+    w = FONT.size(CHECKMATE_TEXT)[0]
+    screen = p.display.get_surface()
+    x_center = x - w//2
+    y_center = y - h//2
+    color = p.Color(FONT_COLOR)
+    label = FONT.render(CHECKMATE_TEXT, True, color)
+    screen.blit(label, (x_center, y_center))
+
+
+def blitStalemateLabel():
+    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    y = LABEL_Y_POS
+    h = FONT.size(STALEMATE_TEXT)[1]
+    w = FONT.size(STALEMATE_TEXT)[0]
+    screen = p.display.get_surface()
+    x_center = x - w//2
+    y_center = y - h//2
+    color = p.Color(FONT_COLOR)
+    label = FONT.render(STALEMATE_TEXT, True, color)
+    screen.blit(label, (x_center, y_center))
+
+
+def overrideLabels():
+    screen = p.display.get_surface()
+    h = FONT.size(CHECKMATE_TEXT)[1]
+    screen.fill(BACKGROUND_COLOR, p.Rect(WIDTH, LABEL_Y_POS-h//2, CONTROL_PANE_WIDTH, h))
 
 
 def cursorOnBoard(screen):

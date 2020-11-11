@@ -28,7 +28,7 @@ class GameState:
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "bK", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
@@ -81,8 +81,8 @@ class GameState:
                     # check if they have an opponent's piece on it
                     if self.board[rowInFrontOfPawn][fromCol + direction][0][0] not in (pieceMoved[0], '-'):
                         possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn), self.board))
-                    # check if an en passant is possible
-                    if self.board[rowInFrontOfPawn][fromCol + direction] == "--" and \
+                    # check if an enpassant is possible
+                    elif self.board[rowInFrontOfPawn][fromCol + direction] == "--" and \
                             (fromCol + direction, rowInFrontOfPawn) == self.enPassantSquare:
                         possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn),
                                                self.board, enPassant=True))
@@ -176,7 +176,6 @@ class GameState:
         # King
         elif pieceMoved[1] == 'K':
             # each field next to the King if it doesn't have a piece from the same color as the King on it
-            # TODO: the King cannot move himself into check
             for col_step in (-1, 0, 1):  # Here we are iterating the fields neighboring the piece
                 for row_step in (-1, 0, 1):
                     if col_step == row_step == 0:
@@ -225,8 +224,6 @@ class GameState:
         1) from a given square,
         2) for only the current player,
         3) with regard to check. (no move is valid where a player checks themselves)
-        In order to work properly, the attribute possibleMoves needs to be up to date, by calling updatePossibleMoves
-        everytime a move was made
         :param fromSq:
         :type fromSq:
         :return:
@@ -238,9 +235,9 @@ class GameState:
             if move.fromSq == fromSq and ((move.pieceMoved[0] == 'w') == self.whiteToMove):
                 # we make and undo the move to see if it puts us in check
                 self.makeMove(move, testMove=True)
-                check = self.isCheck(currentPlayer=False)
+                selfCheck = self.isCheck(currentPlayer=False)
                 self.undoMove(testMove=True)
-                if not check:
+                if not selfCheck:
                     validMoves.append(move)
         return validMoves
 
@@ -278,24 +275,25 @@ class GameState:
         """
         self.board[move.toRow][move.toCol] = move.pieceMoved
         self.board[move.fromRow][move.fromCol] = "--"
-        self.whiteToMove = not self.whiteToMove
-        if move.pawnMadeTwoSteps():
-            omittedRow = mean((move.fromRow, move.toRow))
-            self.enPassantSquare = (move.fromCol, omittedRow)
         self.moveLog.append(move)
         self.handlePawnPromotion()
-        self.enPassantSquare = None
-        self.updatePossibleMoves()
         if not testMove:
-            self.updateValidMoves()
             # taking care of en passant
-            if move.enPassant:
+            self.enPassantSquare = None
+            if move.pawnMadeTwoSteps():  # the move before an en passant capture
+                omittedRow = (move.fromRow + move.toRow)//2
+                self.enPassantSquare = (move.fromCol, omittedRow)
+            elif move.enPassant:  # the en passant capture itself
                 if move.pieceMoved[0] == 'w':
                     squareCapturedByEnpassant = move.toCol, move.toRow + 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
                 else:
                     squareCapturedByEnpassant = move.toCol, move.toRow - 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
+        self.whiteToMove = not self.whiteToMove
+        self.updatePossibleMoves()
+        if not testMove:
+            self.updateValidMoves()
 
 
     def undoMove(self, testMove=False):
@@ -307,18 +305,22 @@ class GameState:
         move = self.moveLog.pop()
         self.board[move.fromRow][move.fromCol] = move.pieceMoved
         self.board[move.toRow][move.toCol] = move.pieceCaptured
-        self.whiteToMove = not self.whiteToMove
-        self.updatePossibleMoves()
         if not testMove:
-            self.updateValidMoves()
             # taking care of en passant
+            if move.pawnMadeTwoSteps():
+                self.enPassantSquare = None
             if move.enPassant:
+                self.enPassantSquare = move.enPassantSquare
                 if move.pieceMoved[0] == 'w':
                     squareCapturedByEnpassant = move.toCol, move.toRow + 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "bp"
                 else:
                     squareCapturedByEnpassant = move.toCol, move.toRow - 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
+        self.whiteToMove = not self.whiteToMove
+        self.updatePossibleMoves()
+        if not testMove:
+            self.updateValidMoves()
 
 
     def handlePawnPromotion(self):
@@ -328,7 +330,7 @@ class GameState:
             if self.board[7][c] == "bp":
                 self.board[7][c] = "bQ"
 
-    def getCheckingMoves(self, currentPlayer=True):
+    def getKingCapturingMoves(self, currentPlayer=True):
         """
         :return: list of moves by current player (or opponent) attacking the other one's king. Empty
         list if not checked.
@@ -346,10 +348,18 @@ class GameState:
 
     def isCheck(self, currentPlayer=True):
         """
-        :return: True if current player (or opponent) is checking the other player, else False.
+        :param currentPlayer: True by default, if set to False the function will look for check
+        in the other player instead
+        :return: True if current player is checking the other player, else False.
         :rtype: bool
         """
-        return len(self.getCheckingMoves(not currentPlayer)) != 0
+        return len(self.getKingCapturingMoves(not currentPlayer)) != 0
+
+    def isStalemate(self):
+        return len(self.validMoves) == 0 and not self.isCheck()
+
+    def isCheckmate(self):
+        return len(self.validMoves) == 0 and self.isCheck()
 
 
 class Move:
@@ -357,7 +367,6 @@ class Move:
     This Class should store all the information about a certain move. The attribute board is the state of the board
     before the move is executed.
     """
-
     def __init__(self, fromSq, toSq, board, enPassant=False):
         self.fromSq = fromSq
         self.fromCol = fromSq[0]
@@ -368,6 +377,10 @@ class Move:
         self.pieceMoved = board[self.fromRow][self.fromCol]
         self.board = board
         self.enPassant = enPassant
+        if self.pieceMoved[0] == 'w':
+            self.enPassantSquare = (self.toCol, self.fromRow - 1)
+        else:
+            self.enPassantSquare = (self.toCol, self.fromRow + 1)
         self.pieceCaptured = board[self.toRow][self.toCol]
 
     def __str__(self):
