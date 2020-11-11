@@ -23,9 +23,8 @@ class TestChessEngine(unittest.TestCase):
         # assert that black may not do a two square pawn advance
         fromSq = (5, 1)
         toSq = (5, 3)
-        blackPawnTwoSqAdvance = Move(fromSq, toSq, gs.board)
-        validMoves = gs.getValidMoves(fromSq)
-        self.assertFalse(any(move == blackPawnTwoSqAdvance for move in validMoves))
+        blackPawnTwoSqAdvance = Move(fromSq, toSq, gs)
+        self.assertFalse(any(move == blackPawnTwoSqAdvance for move in gs.getValidMoves(fromSq)))
 
         # give turn to black and assert that black may now do a two square pawn advance
         gs.whiteToMove = False
@@ -43,7 +42,7 @@ class TestChessEngine(unittest.TestCase):
         # assert that white may now do an en passant capture
         fromSq = (4, 3)
         toSq = (5, 2)
-        whitePawnEnPassant = Move(fromSq, toSq, gs.board, enPassant=True)
+        whitePawnEnPassant = Move(fromSq, toSq, gs, enPassant=True)
         self.assertTrue(any(move == whitePawnEnPassant for move in gs.getValidMoves(fromSq)))
 
         # make the e.p. and assert that the formation on the board is correct afterwards,
@@ -86,20 +85,21 @@ class TestChessEngine(unittest.TestCase):
         # make a different move with white and assert that the enpassant variable is cleared
         fromSq = (4, 7)
         toSq = (4, 6)
-        whiteAnyDifferentMove = Move(fromSq, toSq, gs.board)
-        self.assertTrue(any(move == whiteAnyDifferentMove for move in gs.getValidMoves(fromSq)))
-        gs.makeMove(whiteAnyDifferentMove)
+        whiteSomeDifferentMove = Move(fromSq, toSq, gs)
+        self.assertTrue(any(move == whiteSomeDifferentMove for move in gs.getValidMoves(fromSq)))
+        gs.makeMove(whiteSomeDifferentMove)
         self.assertIsNone(gs.enPassantSquare)
 
         # assert that the en passant is no longer valid
-        self.assertFalse(any(move == whitePawnEnPassant for move in gs.getValidMoves(fromSq)))
+        self.assertFalse(any(move == whitePawnEnPassant for move in gs.getValidMoves(whitePawnEnPassant.fromSq)))
 
         # undo the move and assert that the en passant variable is restored
         gs.undoMove()
         self.assertEquals(enPassantSquare, gs.enPassantSquare)
 
         # assert that white may do the e.p. again
-        self.assertTrue(any(move == whitePawnEnPassant for move in gs.getValidMoves(fromSq)))
+        self.assertTrue(gs.whiteToMove)
+        self.assertTrue(any(move == whitePawnEnPassant for move in gs.getValidMoves(whitePawnEnPassant.fromSq)))
 
 
 
