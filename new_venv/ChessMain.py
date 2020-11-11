@@ -1,17 +1,23 @@
 """
 Handle user input and display current GameState Object
 """
+from time import time
+
 import pygame as p
 import ChessEngine
 
 WIDTH = HEIGHT = 512
+CONTROL_PANE_WIDTH = 200
+CHECK_TEXT = "Check!"
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15  # for animations later on
 IMAGES = {}
-HIGHLIGHTED_MOVES = []
-HIGHLIGHTED_FIELDS = {}
+HIGHLIGHTED_FIELDS = {}  # {(col, row): (color, milliseconds, timeSet)}
 POINTER_PIECE = "--"
+BACKGROUND_COLOR = "white"
+
+#REMOVE_HIGHLIGHT_EVENT = p.USEREVENT + 1
 
 
 def loadImages():
@@ -29,12 +35,12 @@ def main():
     """
     main driver, handle input and update graphics
     """
-    global POINTER_PIECE, HIGHLIGHTED_MOVES, HIGHLIGHTED_FIELDS
+    global POINTER_PIECE, HIGHLIGHTED_FIELDS
     p.init()
     p.display.set_caption("Chess")
-    screen = p.display.set_mode((WIDTH, HEIGHT))
+    screen = p.display.set_mode((WIDTH + CONTROL_PANE_WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color("white"))
+    screen.fill(p.Color(BACKGROUND_COLOR))
     gs = ChessEngine.GameState()
     loadImages()
     running = True
@@ -47,36 +53,58 @@ def main():
                 running = False
 
             elif e.type == p.MOUSEBUTTONDOWN:
+                clearHighlightedFields(p.Color("green"), p.Color("black"))
                 (col, row) = getSquareUnderCursor()
                 POINTER_PIECE = gs.board[row][col]
                 if (POINTER_PIECE[0] == 'w') != gs.whiteToMove:
                     POINTER_PIECE = "--"
                 player_clicks.append((col, row))
                 if len(player_clicks) == 1:  # first click
-                    HIGHLIGHTED_FIELDS[(col, row)] = p.Color("black")  # highlight the clicked field
+                    if not (col, row) in HIGHLIGHTED_FIELDS:
+                        HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time())  # highlight the clicked field
                 elif len(player_clicks) == 2:  # second click
                     validMoves = gs.getValidMoves(player_clicks[0])
-                    #  iterate valid moves, if the move that the player selected is among them, execute the move
+                    # iterate valid moves, if the move that the player selected is among them, execute the move
                     for move in validMoves:
                         if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
-                            gs.makeMove(move)
-                            if gs.isCheck():
+                            # player1 chose this move
+                            gs.makeMove(move)  # switch players turns -> now player2's turn
+                            p2CheckingMoves = gs.getCheckingMoves(currentPlayer=True)
+                            p1CheckingMoves = gs.getCheckingMoves(currentPlayer=False)
+                            if len(p2CheckingMoves) != 0:
+                                # player1 put themselves into check
+                                # undo move and switch back players -> now player1 turn
                                 gs.undoMove()
-                                print("Cannot check yourself.")
+                                # show player2's checking moves for 1 second
+                                addHighlightedFields(p2CheckingMoves, color=p.Color("red"), toSquareHighlight=False, milliseconds=1000)
+                                break
+                            elif len(p1CheckingMoves) != 0:
+                                # player1 checked player2 and player2 is at turn
+                                blitCheckedLabel(True)
+                                # highlight all the player2 kings that are under attack
+                                addHighlightedFields(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
                             else:
-                                print(move)
+                                # nobody is checked
+                                clearHighlightedFields()
+                                blitCheckedLabel(False)
+                            print(move)
                             break
                     #  reset the variables
                     player_clicks = []
                     POINTER_PIECE = "--"
-                    HIGHLIGHTED_FIELDS = {}
-                    HIGHLIGHTED_MOVES = []
 
             elif e.type == p.MOUSEMOTION:
+                if not cursorOnBoard(screen):
+                    continue
                 (col, row) = getSquareUnderCursor()
+                if not ((gs.board[row][col][0] == 'w') == gs.whiteToMove):
+                    # do nothing if user hovers over opponent's pieces
+                    continue
                 if len(player_clicks) == 0:
                     validMoves = gs.getValidMoves((col, row))
-                    HIGHLIGHTED_MOVES = validMoves
+                    clearHighlightedFields(p.Color("green"))
+                    addHighlightedFields(validMoves, p.Color("green"), fromSquareHighlight=False)
+                    continue
 
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
@@ -97,10 +125,7 @@ def drawGameState(screen, gs):
     """
     drawBoard(screen)
     drawPieces(screen, gs.board)
-    for move in HIGHLIGHTED_MOVES:
-        highlightField((move.toCol, move.toRow), screen, p.Color('green'))
-    for field in HIGHLIGHTED_FIELDS:
-        highlightField(field, screen, color=HIGHLIGHTED_FIELDS[field])
+    updateHighlightings(screen)
     drawPointerImage(screen)
 
 
@@ -111,6 +136,19 @@ def drawPointerImage(screen):
     pointer_img_rect = pointer_img.get_rect()
     pointer_img_rect.center = p.mouse.get_pos()
     screen.blit(pointer_img, pointer_img_rect)
+
+
+def updateHighlightings(screen):
+    toPop = []
+    for field in HIGHLIGHTED_FIELDS:
+        color, milliseconds, timeSet = HIGHLIGHTED_FIELDS[field]
+        now = time()
+        if milliseconds is not None and timeSet*1000 + milliseconds < now*1000:
+            toPop.append(field)
+            continue
+        highlightField(field, screen, color=color)
+    for field in toPop:
+        HIGHLIGHTED_FIELDS.pop(field)
 
 
 def highlightField(field, screen, color):
@@ -127,6 +165,37 @@ def highlightField(field, screen, color):
     coloredHighlight = IMAGES["hl"].copy()
     colorSurface(coloredHighlight, color)
     screen.blit(coloredHighlight, p.Rect(col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
+def addHighlightedFields(moves, color, fromSquareHighlight=True, toSquareHighlight=True, milliseconds=None):
+    """
+    :param moves: the moves which should be highlighted
+    :type moves: list
+    :param color: color to use for highlight
+    :type color: Color
+    :param milliseconds: amount of time the highlight should be visible. If None it is visible until removed manually
+    :type milliseconds: int
+    :param fromSquareHighlight: True if start square should also be highlighted, otherwise just end square is
+    highlighted
+    :type fromSquareHighlight: bool
+    """
+    for move in moves:
+        now = time()
+        if toSquareHighlight:
+            HIGHLIGHTED_FIELDS[move.toSq] = (color, milliseconds, now)
+        if fromSquareHighlight:
+            HIGHLIGHTED_FIELDS[move.fromSq] = (color, milliseconds, now)
+
+
+def clearHighlightedFields(*colors):
+    toPop = []
+    for field in HIGHLIGHTED_FIELDS:
+        fieldColor, millis, timeSet = HIGHLIGHTED_FIELDS[field]
+        if millis is None:
+            if colors == () or fieldColor in colors:
+                toPop.append(field)
+    for field in toPop:
+        HIGHLIGHTED_FIELDS.pop(field)
 
 
 def drawBoard(screen):
@@ -173,6 +242,33 @@ def getSquareUnderCursor():
     col = pos[0] // SQ_SIZE
     row = pos[1] // SQ_SIZE
     return col, row
+
+
+def blitCheckedLabel(visible):
+    font = p.font.SysFont("monospace", 20, bold=True)
+    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    y = 100
+    h = font.size(CHECK_TEXT)[1]
+    w = font.size(CHECK_TEXT)[0]
+    screen = p.display.get_surface()
+    x_center = x - w//2
+    y_center = y - h//2
+    if not visible:
+        screen.fill(BACKGROUND_COLOR, p.Rect(x_center, y_center, w, h))
+        return
+    color = p.Color("firebrick")
+    antialias = visible
+    label = font.render(CHECK_TEXT, antialias, color)
+    screen.blit(label, (x_center, y_center))
+
+
+def cursorOnBoard(screen):
+    pos = p.mouse.get_pos()
+    if pos[0] in range(WIDTH) and pos[1] in range(HEIGHT):
+        return True
+    return False
+
+
 
 
 if __name__ == "__main__":

@@ -10,6 +10,12 @@ class GameState:
     # The terms "field" and "piece" are often used synonymously here. A square is always
     # a tuple if two integers between 0 and 7 and a piece or field is always a two character string
     # representation of a piece
+    # a possible move is any move a piece can do according to its physique, even if it puts its own King into check.
+    # a valid move is a possible move where the player doesn't move itself into check
+    # this distinction is important, because in order to know if a move (myMove) is valid we need to know
+    # about the possible moves the opponent could to after we executed myMove
+    # these possible moves of the opponent may also result into putting the opponent into check,
+    # because they don't actually have to be executed in order to check us.
 
     def __init__(self):
         # board is 8x8 2d list, each element has 2 chars
@@ -22,23 +28,27 @@ class GameState:
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "bK", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
         self.whiteToMove = True
         self.moveLog = []
         self.possibleMoves = []
+        self.validMoves = []
         self.enPassantSquare = None  # here a tuple should be stored representing the square a pawn omitted so that an
         # opponent's pawn can capture this pawn via en passant by checking if this variable is set
         # it is reset to None in the very next move because en passant is only allowed immediately
         self.updatePossibleMoves()
+        self.updateValidMoves()
+
 
     def calculatePossibleMoves(self, fromSq):
         """
-        This function determines all valid moves from a given square on this board with regards to the current state of
-        the board. If the from-square is a vacant field it returns an empty list. It should not be called outside the
-        object. Instead, getPossibleMoves should be called, so the moves don't have to be calculated again.
+        Determines possible moves:
+        1) from a given square,
+        2) for both colors,
+        3) without regard to check.
         :param fromSq: given square, e.g. (4, 5)
         :type fromSq: tuple
         :return: a list of ChessEngine.Move Objects which are valid moves from the
@@ -184,8 +194,11 @@ class GameState:
 
     def updatePossibleMoves(self):
         """
-        determines all the possible moves for each square on the board and stores them. should only be called when a
-        move was made in order to save perfomance. ignores check
+        Calls calculatePossibleMoves and stores the result
+        1) from all the squares,
+        2) for both colors,
+        3) without regard to check.
+        Should only be called when a move was made in order to save performance.
         :return:
         :rtype:
         """
@@ -195,14 +208,65 @@ class GameState:
                 possibleMoves += self.calculatePossibleMoves((col, row))
         self.possibleMoves = possibleMoves
 
-    def getValidMoves(self, fromSq):
+    def getPossibleMoves(self, fromSq):
+        """
+        Returns a subset of the pre calculated possible moves, so that they all start at a given square.
+        """
+        possibleMoves = []
+        for move in self.possibleMoves:
+            if move.fromSq == fromSq:
+                possibleMoves.append(move)
+        return possibleMoves
+
+
+    def calculateValidMoves(self, fromSq):
+        """
+        Determines from the pre calculated possible moves the valid moves
+        1) from a given square,
+        2) for only the current player,
+        3) with regard to check. (no move is valid where a player checks themselves)
+        In order to work properly, the attribute possibleMoves needs to be up to date, by calling updatePossibleMoves
+        everytime a move was made
+        :param fromSq:
+        :type fromSq:
+        :return:
+        :rtype:
+        """
         validMoves = []
         for move in self.possibleMoves:
+            # check if the move starts at the specified square and if it is a piece of the player at turn
             if move.fromSq == fromSq and ((move.pieceMoved[0] == 'w') == self.whiteToMove):
+                # we make and undo the move to see if it puts us in check
+                self.makeMove(move, testMove=True)
+                check = self.isCheck(currentPlayer=False)
+                self.undoMove(testMove=True)
+                if not check:
+                    validMoves.append(move)
+        return validMoves
+
+    def updateValidMoves(self):
+        """
+        Calls calculateValidMoves on all the squares and stores the result.
+        """
+        validMoves = []
+        for col in range(8):
+            for row in range(8):
+                validMoves += self.calculateValidMoves((col, row))
+        self.validMoves = validMoves
+
+    def getValidMoves(self, fromSq):
+        """
+        Returns a subset of the pre calculated valid moves, so that they all start at a given square.
+        Should be called instead of calculateValidMoves if no move was made since updating the valid moves.
+        """
+        validMoves = []
+        for move in self.validMoves:
+            if move.fromSq == fromSq:
                 validMoves.append(move)
         return validMoves
 
-    def makeMove(self, move):
+
+    def makeMove(self, move, testMove=False):
         """
         Executes a move and logs it, and changes which player's turn it is.
         Keeps track the enPassantSquare variable.
@@ -212,22 +276,29 @@ class GameState:
         :return:
         :rtype:
         """
-        if move.enPassant:
-            squareCapturedByEnpassant = move.toCol, move.toRow + (1 if move.pieceMoved[0] == 'w' else - 1)
-            self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
         self.board[move.toRow][move.toCol] = move.pieceMoved
         self.board[move.fromRow][move.fromCol] = "--"
         self.whiteToMove = not self.whiteToMove
-        self.enPassantSquare = None
         if move.pawnMadeTwoSteps():
             omittedRow = mean((move.fromRow, move.toRow))
             self.enPassantSquare = (move.fromCol, omittedRow)
         self.moveLog.append(move)
-        self.checkPawnPromotion()
+        self.handlePawnPromotion()
+        self.enPassantSquare = None
         self.updatePossibleMoves()
-        print("CHECK =", self.isCheck())
+        if not testMove:
+            self.updateValidMoves()
+            # taking care of en passant
+            if move.enPassant:
+                if move.pieceMoved[0] == 'w':
+                    squareCapturedByEnpassant = move.toCol, move.toRow + 1
+                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
+                else:
+                    squareCapturedByEnpassant = move.toCol, move.toRow - 1
+                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
 
-    def undoMove(self):
+
+    def undoMove(self, testMove=False):
         """
         undoes the last move and deletes it from the log, thus allowing to undo all the moves
         """
@@ -237,34 +308,48 @@ class GameState:
         self.board[move.fromRow][move.fromCol] = move.pieceMoved
         self.board[move.toRow][move.toCol] = move.pieceCaptured
         self.whiteToMove = not self.whiteToMove
-        # taking care of en passant
-        if move.enPassant:
-            if move.pieceMoved[0] == 'w':
-                squareCapturedByEnpassant = move.toCol, move.toRow + 1
-                self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "bp"
-            else:
-                squareCapturedByEnpassant = move.toCol, move.toRow - 1
-                self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
         self.updatePossibleMoves()
+        if not testMove:
+            self.updateValidMoves()
+            # taking care of en passant
+            if move.enPassant:
+                if move.pieceMoved[0] == 'w':
+                    squareCapturedByEnpassant = move.toCol, move.toRow + 1
+                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "bp"
+                else:
+                    squareCapturedByEnpassant = move.toCol, move.toRow - 1
+                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
 
-    def checkPawnPromotion(self):
+
+    def handlePawnPromotion(self):
         for c in range(8):
             if self.board[0][c] == "wp":
                 self.board[0][c] = "wQ"
             if self.board[7][c] == "bp":
                 self.board[7][c] = "bQ"
 
-    def isCheck(self):
+    def getCheckingMoves(self, currentPlayer=True):
         """
-        :return: True if opponent (not current player) is checked. That means an illegal move happened before
-        :rtype: bool
+        :return: list of moves by current player (or opponent) attacking the other one's king. Empty
+        list if not checked.
+        :rtype: list
         """
+        checking_moves = []
         # look at possible moves to see if we are checked
         for move in self.possibleMoves:
-            if (move.pieceMoved[0] == 'w') == self.whiteToMove:  # check if opponent's piece
+            # filter for the color of the piece
+            if (move.pieceMoved[0] == 'w') == (self.whiteToMove if currentPlayer else not self.whiteToMove):
+                # see if King is under attack
                 if move.pieceCaptured[1] == 'K' and move.pieceCaptured[0] != move.pieceMoved[0]:
-                    return True
-        return False
+                    checking_moves.append(move)
+        return checking_moves
+
+    def isCheck(self, currentPlayer=True):
+        """
+        :return: True if current player (or opponent) is checking the other player, else False.
+        :rtype: bool
+        """
+        return len(self.getCheckingMoves(not currentPlayer)) != 0
 
 
 class Move:
