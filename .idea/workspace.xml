@@ -262,7 +262,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/new_venv/ChessEngine.py</url>
-          <line>212</line>
+          <line>202</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
       </breakpoints>

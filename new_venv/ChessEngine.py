@@ -29,16 +29,6 @@ class GameState:
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
-        self.board = [
-            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
-            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
-            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
-            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
-            ["--", "--", "--", "--", "wp", "--", "--", "--"],
-            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
-            ["wp", "wp", "wp", "--", "--", "wp", "wp", "wp"],
-            ["wR", "--", "wB", "--", "wK", "wB", "--", "wR"]
-        ]
         self.whiteToMove = True
         self.moveLog = []
         self.possibleMoves = []
