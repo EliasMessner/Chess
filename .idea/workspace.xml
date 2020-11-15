@@ -6,6 +6,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9561f48f-5bea-4f9f-a90c-11f974c27ad9" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/elias.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/elias.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/new_venv/ChessEngine.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessEngine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/new_venv/ChessMain.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessMain.py" afterDir="false" />
@@ -50,7 +51,7 @@
       <recent name="C:\Users\elias\PycharmProjects\Chess\new_venv\images" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ChessMain">
+  <component name="RunManager" selected="Python tests.Unittests for test_chessEngine.TestChessEngine.test_castling">
     <configuration name="ChessMain" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="Chess" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -93,6 +94,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests for test_chessEngine.TestChessEngine.test_castling" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="Chess" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/new_venv" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_chessEngine.TestChessEngine.test_castling&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Unittests for test_chessEngine.TestChessEngine.test_enPassant" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="Chess" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -109,6 +124,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Unittests for test_chessEngine.TestChessEngine.test_castling" />
         <item itemvalue="Python tests.Unittests for test_chessEngine.TestChessEngine.test_enPassant" />
       </list>
     </recent_temporary>
@@ -147,6 +163,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="614" y="115" key="CommitChangelistDialog2/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605049399144" />
+    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog" timestamp="1605466836402">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605466836402" />
     <state x="739" y="275" key="FileChooserDialogImpl" timestamp="1604919910409">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -167,58 +187,62 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="667" height="177" key="GridCell.Tab.-1.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605020180302" />
-    <state width="1105" height="167" key="GridCell.Tab.0.bottom" timestamp="1605209792332">
+    <state width="1096" height="270" key="GridCell.Tab.0.bottom" timestamp="1605478492179">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1105" height="167" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605209792332" />
+    <state width="1096" height="270" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478492179" />
     <state width="786" height="130" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605170966527" />
     <state width="1432" height="183" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914517" />
-    <state width="1105" height="167" key="GridCell.Tab.0.center" timestamp="1605209792332">
+    <state width="1096" height="270" key="GridCell.Tab.0.center" timestamp="1605478492179">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1105" height="167" key="GridCell.Tab.0.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605209792332" />
+    <state width="1096" height="270" key="GridCell.Tab.0.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478492179" />
     <state width="786" height="130" key="GridCell.Tab.0.center/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605170966526" />
     <state width="1432" height="183" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914516" />
-    <state width="1105" height="167" key="GridCell.Tab.0.left" timestamp="1605209792332">
+    <state width="1096" height="270" key="GridCell.Tab.0.left" timestamp="1605478492178">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1105" height="167" key="GridCell.Tab.0.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605209792332" />
+    <state width="1096" height="270" key="GridCell.Tab.0.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478492178" />
     <state width="786" height="130" key="GridCell.Tab.0.left/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605170966526" />
     <state width="1432" height="183" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914516" />
-    <state width="1105" height="167" key="GridCell.Tab.0.right" timestamp="1605209792332">
+    <state width="1096" height="270" key="GridCell.Tab.0.right" timestamp="1605478492179">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1105" height="167" key="GridCell.Tab.0.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605209792332" />
+    <state width="1096" height="270" key="GridCell.Tab.0.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478492179" />
     <state width="786" height="130" key="GridCell.Tab.0.right/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605170966526" />
     <state width="1432" height="183" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914516" />
-    <state width="1427" height="216" key="GridCell.Tab.1.bottom" timestamp="1605136816725">
+    <state width="1420" height="359" key="GridCell.Tab.1.bottom" timestamp="1605478319393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1427" height="216" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605136816725" />
+    <state width="1420" height="359" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478319393" />
     <state width="1030" height="173" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605031548094" />
     <state width="1432" height="183" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914517" />
-    <state width="1427" height="216" key="GridCell.Tab.1.center" timestamp="1605136816725">
+    <state width="1420" height="359" key="GridCell.Tab.1.center" timestamp="1605478319393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1427" height="216" key="GridCell.Tab.1.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605136816725" />
+    <state width="1420" height="359" key="GridCell.Tab.1.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478319393" />
     <state width="1030" height="173" key="GridCell.Tab.1.center/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605031548094" />
     <state width="1432" height="183" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914517" />
-    <state width="1427" height="216" key="GridCell.Tab.1.left" timestamp="1605136816725">
+    <state width="1420" height="359" key="GridCell.Tab.1.left" timestamp="1605478319393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1427" height="216" key="GridCell.Tab.1.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605136816725" />
+    <state width="1420" height="359" key="GridCell.Tab.1.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478319393" />
     <state width="1030" height="173" key="GridCell.Tab.1.left/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605031548094" />
     <state width="1432" height="183" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914517" />
-    <state width="1427" height="216" key="GridCell.Tab.1.right" timestamp="1605136816725">
+    <state width="1420" height="359" key="GridCell.Tab.1.right" timestamp="1605478319393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1427" height="216" key="GridCell.Tab.1.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605136816725" />
+    <state width="1420" height="359" key="GridCell.Tab.1.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605478319393" />
     <state width="1030" height="173" key="GridCell.Tab.1.right/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605031548094" />
     <state width="1432" height="183" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605124914517" />
     <state x="461" y="163" key="SettingsEditor" timestamp="1605173018267">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="461" y="163" key="SettingsEditor/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605173018267" />
+    <state x="92" y="92" width="1736" height="856" key="ShowDiffWithBranchDialog" timestamp="1605466836402">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="92" y="92" width="1736" height="856" key="ShowDiffWithBranchDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605466836402" />
     <state x="552" y="254" key="Vcs.Push.Dialog.v2" timestamp="1605049114729">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -232,13 +256,20 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="769" y="438" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605049387987" />
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1605005936298">
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1605468431833">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605005936298" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605468431833" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/new_venv/ChessEngine.py</url>
+          <line>212</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -251,8 +282,10 @@
       <configuration name="PythonConfigurationType">
         <watch expression="gs.enPassantSquare" />
         <watch expression="self.enPassantSquare" language="Python" />
-        <watch expression="any(move.enPassant for move in gs.validMoves)" language="Python" />
+        <watch expression="all(self.board[7][c] == &quot;--&quot; for c in range(5, 7))" language="Python" />
         <watch expression="self.whiteToMove" language="Python" />
+        <watch expression="not self.piecesMoved[&quot;wLR&quot;]" language="Python" />
+        <watch expression="self.board[0][5]" language="Python" />
       </configuration>
     </watches-manager>
   </component>

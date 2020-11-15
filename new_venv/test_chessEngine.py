@@ -115,6 +115,106 @@ class TestChessEngine(unittest.TestCase):
         ]
         # TODO
 
+    def test_castling(self):
+        gs = GameState()
+        gs.board = [
+            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "--", "--", "wp", "wp", "wp"],
+            ["wR", "--", "wB", "--", "wK", "wB", "--", "wR"]
+        ]
+        whiteLeftRookCastling = Move((4, 7), (2, 7), gs, castling=True)
+        whiteRightRookCastling = Move((4, 7), (6, 7), gs, castling=True)
+        blackLeftRookCastling = Move((4, 0), (2, 0), gs, castling=True)
+        blackRightRookCastling = Move((4, 0), (6, 0), gs, castling=True)
+
+        gs.updateValidMoves()
+        self.assertNotIn(whiteLeftRookCastling, gs.possibleMoves)
+        self.assertNotIn(whiteRightRookCastling, gs.possibleMoves)
+        self.assertNotIn(blackLeftRookCastling, gs.possibleMoves)
+        self.assertNotIn(blackRightRookCastling, gs.possibleMoves)
+
+        self.assertTrue(gs.whiteToMove)
+
+        whiteLeftBishopMakeSpace = Move((2, 7), (3, 6), gs)
+        self.assertIn(whiteLeftBishopMakeSpace, gs.validMoves)
+        gs.makeMove(whiteLeftBishopMakeSpace)
+        self.assertEqual(gs.board, [
+            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "--", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "wB", "--", "wR"]
+        ])
+        self.assertFalse(gs.whiteToMove)
+        gs.whiteToMove = True
+        gs.updateValidMoves()
+        self.assertIn(whiteLeftRookCastling, gs.validMoves)
+
+        whiteRightBishopMakeSpace = Move((5, 7), (4, 6), gs)
+        self.assertIn(whiteRightBishopMakeSpace, gs.validMoves)
+        gs.makeMove(whiteRightBishopMakeSpace)
+        self.assertEqual(gs.board, [
+            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.assertFalse(gs.whiteToMove)
+        gs.whiteToMove = True
+        gs.updateValidMoves()
+        self.assertIn(whiteRightRookCastling, gs.validMoves)
+
+        gs.whiteToMove = False
+        gs.updateValidMoves()
+
+        blackLeftBishopMakeSpace = Move((2, 0), (3, 1), gs)
+        self.assertIn(blackLeftBishopMakeSpace, gs.validMoves)
+        gs.makeMove(blackLeftBishopMakeSpace)
+        self.assertEqual(gs.board, [
+            ["bR", "--", "--", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "bB", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.assertTrue(gs.whiteToMove)
+        gs.whiteToMove = False
+        gs.updateValidMoves()
+        self.assertIn(blackLeftRookCastling, gs.validMoves)
+
+        blackRightBishopMakeSpace = Move((5, 0), (4, 1), gs)
+        self.assertIn(blackRightBishopMakeSpace, gs.validMoves)
+        gs.makeMove(blackRightBishopMakeSpace)
+        self.assertEqual(gs.board, [
+            ["bR", "--", "--", "--", "bK", "--", "--", "bR"],
+            ["bp", "bp", "bp", "bB", "bB", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.assertTrue(gs.whiteToMove)
+        gs.whiteToMove = False
+        gs.updateValidMoves()
+        self.assertIn(blackRightRookCastling, gs.validMoves)
+
 
 if __name__ == '__main__':
     unittest.main()

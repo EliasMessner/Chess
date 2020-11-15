@@ -64,7 +64,8 @@ def main():
                 POINTER_PIECE = gs.board[row][col]
                 if (POINTER_PIECE[0] == 'w') != gs.whiteToMove:
                     POINTER_PIECE = "--"
-                    break
+                    if len(player_clicks) == 0:  # player did not click on an allied piece in the first click
+                        break
                 player_clicks.append((col, row))
                 if len(player_clicks) == 1:  # first click
                     # highlight the clicked field

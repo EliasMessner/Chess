@@ -1,21 +1,19 @@
-from numpy import mean
-
+# Author Elias Messner, November 2020
+# The terms "field" and "piece" are often used synonymously here. A square is always
+# a tuple if two integers from 0 to 7 and a piece or field is always a two character string
+# representation of a piece
+# a possible move is any move a piece can do according to its physique, even if it puts its own King into check.
+# a valid move is a possible move where the player doesn't move itself into check
+# this distinction is important, because in order to know if a move (myMove) is valid we need to know
+# about the possible moves the opponent could to after we executed myMove
+# these possible moves of the opponent may also result into putting the opponent into check,
+# because they don't actually have to be executed in order to check us.
 
 class GameState:
     """
     This class is responsible for storing all the information about the current state of a chess game and for
     determining the valid moves at the current state. It will also keep a move log.
     """
-
-    # The terms "field" and "piece" are often used synonymously here. A square is always
-    # a tuple if two integers from 0 to 7 and a piece or field is always a two character string
-    # representation of a piece
-    # a possible move is any move a piece can do according to its physique, even if it puts its own King into check.
-    # a valid move is a possible move where the player doesn't move itself into check
-    # this distinction is important, because in order to know if a move (myMove) is valid we need to know
-    # about the possible moves the opponent could to after we executed myMove
-    # these possible moves of the opponent may also result into putting the opponent into check,
-    # because they don't actually have to be executed in order to check us.
 
     def __init__(self):
         # the first char represents the color of the piece 'b' or 'w'
@@ -31,6 +29,16 @@ class GameState:
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
+        self.board = [
+            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "--", "--", "wp", "wp", "wp"],
+            ["wR", "--", "wB", "--", "wK", "wB", "--", "wR"]
+        ]
         self.whiteToMove = True
         self.moveLog = []
         self.possibleMoves = []
@@ -38,9 +46,15 @@ class GameState:
         self.enPassantSquare = None  # here a tuple should be stored representing the square a pawn omitted so that an
         # opponent's pawn can capture this pawn via en passant by checking if this variable is set
         # it is reset to None in the very next move because en passant is only allowed immediately
+        self.piecesMoved = {"wK": False,
+                            "wLR": False,  # left rook
+                            "wRR": False,  # right rook
+                            "bK": False,
+                            "bLR": False,
+                            "bRR": False}  # keeping track if the rooks or kings have been moved to see if
+        # castling is possible
         self.updatePossibleMoves()
         self.updateValidMoves()
-
 
     def calculatePossibleMoves(self, fromSq):
         """
@@ -187,6 +201,21 @@ class GameState:
                     if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
                         continue
                     possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
+            # check if castling is possible
+            if pieceMoved[0] == 'w' and not self.piecesMoved["wK"]:  # white king and hasn't moved yet
+                if not self.piecesMoved["wLR"]:  # white left rook not moved yet
+                    if all(self.board[7][c] == "--" for c in range(1, 4)):  # way between wLR and wK is free
+                        possibleMoves.append(Move(fromSq, (2, 7), self, castling=True))
+                if not self.piecesMoved["wRR"]:  # white right rook not moved yet
+                    if all(self.board[7][c] == "--" for c in range(5, 7)):  # way between wRR and wK is free
+                        possibleMoves.append(Move(fromSq, (6, 7), self, castling=True))
+            elif pieceMoved[0] == 'b' and not self.piecesMoved["bK"]:  # black king not moved yet
+                if not self.piecesMoved["bLR"]:  # black left rook not moved yet
+                    if all(self.board[0][c] == "--" for c in range(1, 4)):  # way between bLR and bK is free
+                        possibleMoves.append(Move(fromSq, (2, 0), self, castling=True))
+                if not self.piecesMoved["bRR"]:  # black right rook not moved yet
+                    if all(self.board[0][c] == "--" for c in range(5, 7)):  # way between bRR and bK is free
+                        possibleMoves.append(Move(fromSq, (6, 0), self, castling=True))
 
         return possibleMoves
 
@@ -277,7 +306,10 @@ class GameState:
                 else:
                     squareCapturedByEnpassant = move.toCol, move.toRow - 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
+            # taking care of castling
+            self.handleCastling(move)
         self.whiteToMove = not self.whiteToMove
+        # updatePossibleMoves needs to be called before updateValidMoves, but after handlePawnPromotion.
         self.updatePossibleMoves()
         if not testMove:
             self.updateValidMoves()
@@ -302,10 +334,68 @@ class GameState:
                 else:
                     squareCapturedByEnpassant = move.toCol, move.toRow - 1
                     self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
+            # taking care of castling
+            self.handleCastling(move, undo=True)
         self.whiteToMove = not self.whiteToMove
         self.updatePossibleMoves()
         if not testMove:
             self.updateValidMoves()
+
+    def handleFirstMoveWithRooksOrKing(self, move, undo=False):
+        if move.isFirstMoveWithBlackLeftRook:
+            self.piecesMoved["bLR"] = not undo
+        if move.isFirstMoveWithBlackRightRook:
+            self.piecesMoved["bRR"] = not undo
+        if move.isFirstMoveWithBlackKing:
+            self.piecesMoved["bK"] = not undo
+        if move.isFirstMoveWithWhiteLeftRook:
+            self.piecesMoved["wLR"] = not undo
+        if move.isFirstMoveWithWhiteRightRook:
+            self.piecesMoved["wRR"] = not undo
+        if move.isFirstMoveWithWhiteKing:
+            self.piecesMoved["wK"] = not undo
+
+    def handleCastling(self, move, undo=False):
+        self.handleFirstMoveWithRooksOrKing(move, undo=undo)
+        if move.castling:
+            if not undo:
+                if move.toSq == (2, 7):  # wK with wLR
+                    self.board[7][0] = "--"
+                    self.board[7][3] = "wR"
+                    self.piecesMoved["wLR"] = True
+                elif move.toSq == (6, 7):  # wK with wRR
+                    self.board[7][7] = "--"
+                    self.board[7][5] = "wR"
+                    self.piecesMoved["wRR"] = True
+                elif move.toSq == (2, 0):  # bK with bLR
+                    self.board[0][0] = "--"
+                    self.board[0][3] = "bR"
+                    self.piecesMoved["bLR"] = True
+                elif move.toSq == (6, 0):  # bK with bRR
+                    self.board[0][7] = "--"
+                    self.board[0][5] = "bR"
+                    self.piecesMoved["bRR"] = True
+            else:
+                if move.toSq == (2, 7):  # wK with wLR
+                    self.board[7][0] = "wR"
+                    self.board[7][3] = "--"
+                    self.piecesMoved["wLR"] = False
+                    self.piecesMoved["wK"] = False
+                elif move.toSq == (6, 7):  # wK with wRR
+                    self.board[7][7] = "wR"
+                    self.board[7][5] = "--"
+                    self.piecesMoved["wRR"] = False
+                    self.piecesMoved["wK"] = False
+                elif move.toSq == (2, 0):  # bK with bLR
+                    self.board[0][0] = "bR"
+                    self.board[0][3] = "--"
+                    self.piecesMoved["bLR"] = False
+                    self.piecesMoved["bK"] = False
+                elif move.toSq == (6, 0):  # bK with bRR
+                    self.board[0][7] = "bR"
+                    self.board[0][5] = "--"
+                    self.piecesMoved["bRR"] = False
+                    self.piecesMoved["bK"] = False
 
     def handlePawnPromotion(self):
         for c in range(8):
@@ -362,7 +452,7 @@ class Move:
     before the move is executed.
     """
 
-    def __init__(self, fromSq, toSq, gameState, enPassant=False):
+    def __init__(self, fromSq, toSq, gameState, enPassant=False, castling=False):
         self.fromSq = fromSq
         self.fromCol = fromSq[0]
         self.fromRow = fromSq[1]
@@ -377,6 +467,13 @@ class Move:
         self.enPassant = enPassant
         self.pieceCaptured = gameState.board[self.toRow][self.toCol]
         self.enPassantSquare = gameState.enPassantSquare
+        self.castling = castling
+        self.isFirstMoveWithBlackLeftRook = self.fromSq == (0, 0) and not gameState.piecesMoved["bLR"]
+        self.isFirstMoveWithBlackRightRook = self.fromSq == (7, 0) and not gameState.piecesMoved["bRR"]
+        self.isFirstMoveWithBlackKing = self.fromSq == (4, 0) and not gameState.piecesMoved["bK"]
+        self.isFirstMoveWithWhiteLeftRook = self.fromSq == (0, 7) and not gameState.piecesMoved["wLR"]
+        self.isFirstMoveWithWhiteRightRook = self.fromSq == (7, 7) and not gameState.piecesMoved["wRR"]
+        self.isFirstMoveWithWhiteKing = self.fromSq == (4, 7) and not gameState.piecesMoved["wK"]
 
     def __str__(self):
         """
