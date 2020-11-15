@@ -8,7 +8,7 @@ class GameState:
     """
 
     # The terms "field" and "piece" are often used synonymously here. A square is always
-    # a tuple if two integers between 0 and 7 and a piece or field is always a two character string
+    # a tuple if two integers from 0 to 7 and a piece or field is always a two character string
     # representation of a piece
     # a possible move is any move a piece can do according to its physique, even if it puts its own King into check.
     # a valid move is a possible move where the player doesn't move itself into check
@@ -18,7 +18,6 @@ class GameState:
     # because they don't actually have to be executed in order to check us.
 
     def __init__(self):
-        # board is 8x8 2d list, each element has 2 chars
         # the first char represents the color of the piece 'b' or 'w'
         # the second char represents the type of the piece 'K', 'Q', 'B', 'N', 'R' or 'p'
         # "--" represents a vacant field
@@ -41,6 +40,7 @@ class GameState:
         # it is reset to None in the very next move because en passant is only allowed immediately
         self.updatePossibleMoves()
         self.updateValidMoves()
+
 
     def calculatePossibleMoves(self, fromSq):
         """
@@ -206,16 +206,6 @@ class GameState:
                 possibleMoves += self.calculatePossibleMoves((col, row))
         self.possibleMoves = possibleMoves
 
-    def getPossibleMoves(self, fromSq):
-        """
-        Returns a subset of the pre calculated possible moves, so that they all start at a given square.
-        """
-        possibleMoves = []
-        for move in self.possibleMoves:
-            if move.fromSq == fromSq:
-                possibleMoves.append(move)
-        return possibleMoves
-
     def calculateValidMoves(self, fromSq):
         """
         Determines from the pre calculated possible moves the valid moves
@@ -273,8 +263,8 @@ class GameState:
         self.board[move.toRow][move.toCol] = move.pieceMoved
         self.board[move.fromRow][move.fromCol] = "--"
         self.moveLog.append(move)
-        self.handlePawnPromotion()
         if not testMove:
+            self.handlePawnPromotion()
             # taking care of en passant
             self.enPassantSquare = None
             if move.pawnMadeTwoSteps():  # the move before an en passant capture
@@ -355,6 +345,16 @@ class GameState:
     def isCheckmate(self):
         return len(self.validMoves) == 0 and self.isCheck()
 
+    def printMoveLog(self):
+        for move in self.moveLog:
+            formation = ""
+            for row in move.board:
+                for field in row:
+                    formation += field + " "
+                formation += "\n"
+            print(formation)
+            print(move, "\n")
+
 
 class Move:
     """
@@ -370,13 +370,11 @@ class Move:
         self.toCol = toSq[0]
         self.toRow = toSq[1]
         self.pieceMoved = gameState.board[self.fromRow][self.fromCol]
-        self.board = gameState.board
+        self.board = []
+        # copy the gameState's boad by value
+        for i in range(len(gameState.board)):
+            self.board.append(gameState.board[i][:])
         self.enPassant = enPassant
-        # if enPassant:
-        #     if self.pieceMoved[0] == 'w':
-        #         self.enPassantSquare = (self.toCol, self.fromRow - 1)
-        #     else:
-        #         self.enPassantSquare = (self.toCol, self.fromRow + 1)
         self.pieceCaptured = gameState.board[self.toRow][self.toCol]
         self.enPassantSquare = gameState.enPassantSquare
 

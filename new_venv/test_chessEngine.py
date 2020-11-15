@@ -4,7 +4,7 @@ from ChessEngine import GameState, Move
 
 class TestChessEngine(unittest.TestCase):
 
-    def test_en_passant(self):
+    def test_enPassant(self):
         gs = GameState()
         gs.board = [
             ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
@@ -45,7 +45,7 @@ class TestChessEngine(unittest.TestCase):
         whitePawnEnPassant = Move(fromSq, toSq, gs, enPassant=True)
         self.assertTrue(any(move == whitePawnEnPassant for move in gs.getValidMoves(fromSq)))
 
-        # make the e.p. and assert that the formation on the board is correct afterwards,
+        # make the e.p. move and assert that the formation on the board is correct afterwards,
         # especially that white has captured the black pawn via e.p.
         gs.makeMove(whitePawnEnPassant)
         self.assertEquals(gs.board, [
@@ -101,9 +101,19 @@ class TestChessEngine(unittest.TestCase):
         self.assertTrue(gs.whiteToMove)
         self.assertTrue(any(move == whitePawnEnPassant for move in gs.getValidMoves(whitePawnEnPassant.fromSq)))
 
-
-
-
+    def test_pawnPromotion(self):
+        gs = GameState()
+        gs.board = [
+            ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["wp", "wp", "wp", "wp", "--", "wp", "wp", "wp"],
+            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+        ]
+        # TODO
 
 
 if __name__ == '__main__':
