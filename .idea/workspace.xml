@@ -6,11 +6,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9561f48f-5bea-4f9f-a90c-11f974c27ad9" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/elias.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/elias.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/new_venv/ChessEngine.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessEngine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_venv/ChessMain.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessMain.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_venv/test_chessEngine.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/test_chessEngine.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

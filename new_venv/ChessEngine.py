@@ -3,7 +3,7 @@
 # a tuple if two integers from 0 to 7 and a piece or field is always a two character string
 # representation of a piece
 # a possible move is any move a piece can do according to its physique, even if it puts its own King into check.
-# a valid move is a possible move where the player doesn't move itself into check
+# a valid move is a possible move where the player doesn't move themselves into check
 # this distinction is important, because in order to know if a move (myMove) is valid we need to know
 # about the possible moves the opponent could to after we executed myMove
 # these possible moves of the opponent may also result into putting the opponent into check,
