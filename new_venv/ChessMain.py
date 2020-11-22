@@ -1,17 +1,21 @@
 """
 Handle user input and display current GameState Object
 """
-from time import time
+import time
 
 import pygame as p
 import PygameUtils as pu
 import ChessEngine
+from Spinner import Spinner
 
 WIDTH = HEIGHT = 512
 CONTROL_PANE_WIDTH = 200
 CHECK_TEXT = "Check!"
 CHECKMATE_TEXT = "Checkmate!"
 STALEMATE_TEXT = "Stalemate!"
+START_CLOCK = "Start Clock"
+RESUME_CLOCK = "Resume"
+PAUSE_CLOCK = "Pause"
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 40
@@ -22,6 +26,9 @@ BACKGROUND_COLOR = "white"
 FONT = None
 FONT_COLOR = "firebrick"
 LABEL_Y_POS = 80
+chess_clock_running = False
+
+checkBoxPos = (WIDTH + CONTROL_PANE_WIDTH // 20, 400)
 
 
 def loadImages():
@@ -39,7 +46,7 @@ def main():
     """
     main driver, handle input and update graphics
     """
-    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE
+    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, showPossibleMoves_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, chess_clock_running, last_time_chess_clock_updated
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
@@ -50,6 +57,15 @@ def main():
     loadImages()
     running = True
     player_clicks = []  # two  tuples: [(6, 4), (4, 4)]
+    showPossibleMoves_checkBox = pu.checkbox(color=p.Color("black"), x=checkBoxPos[0],
+                                             y=checkBoxPos[1], width=15,
+                                             height=15, size=11, text="Show possible moves", check=True,
+                                             font="dejavusans")
+    set_minutes_spinner = Spinner(checkBoxPos[0], checkBoxPos[1] - 350, width=100, height=20, value=7)
+    start_clock_btn = pu.button(p.Color("lightgreen"), x=checkBoxPos[0] + set_minutes_spinner.width + 5,
+                                y=set_minutes_spinner.top, width=80, height=20, text=START_CLOCK, size=11,
+                                font="dejavusans")
+    chess_clock = (set_minutes_spinner.value * 60, set_minutes_spinner.value * 60)  # (whitesTime, blacksTime)
 
     while running:
         for e in p.event.get():
@@ -59,6 +75,24 @@ def main():
 
             elif e.type == p.MOUSEBUTTONDOWN:
                 if not cursorOnBoard(screen):
+                    # check if spinner was clicked
+                    if set_minutes_spinner.onClick(p.mouse.get_pos()):
+                        chess_clock_running = False
+                        chess_clock = (set_minutes_spinner.value*60, set_minutes_spinner.value*60)
+                        start_clock_btn.text = START_CLOCK
+                        continue
+                    # check if start clock button was clicked
+                    if start_clock_btn.isOver(p.mouse.get_pos()):
+                        if chess_clock_running:
+                            chess_clock_running = False
+                            start_clock_btn.text = RESUME_CLOCK
+                        else:
+                            chess_clock_running = True
+                            start_clock_btn.text = PAUSE_CLOCK
+                        last_time_chess_clock_updated = time.time()
+                    # check if checkBox was clicked
+                    if showPossibleMoves_checkBox.isOver(p.mouse.get_pos()):
+                        showPossibleMoves_checkBox.check = not showPossibleMoves_checkBox.check
                     continue
                 (col, row) = getSquareUnderCursor()
                 POINTER_PIECE = gs.board[row][col]
@@ -70,7 +104,7 @@ def main():
                 if len(player_clicks) == 1:  # first click
                     # highlight the clicked field
                     if not (col, row) in HIGHLIGHTED_FIELDS:
-                        HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time())
+                        HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time.time())
                 elif len(player_clicks) == 2:  # second click
                     clearHighlightedFields()
                     validMoves = gs.getValidMoves(player_clicks[0])
@@ -82,15 +116,18 @@ def main():
                             # player1 chose this move
                             gs.makeMove(move)  # make move and switch players
                             # now player2 turn
-                            p2CheckingMoves = gs.getKingCapturingMoves(currentPlayer=True)  # the moves of p2 that check p1
-                            p1CheckingMoves = gs.getKingCapturingMoves(currentPlayer=False)  # the moves of p1 that check p2
+                            p2CheckingMoves = gs.getKingCapturingMoves(
+                                currentPlayer=True)  # the moves of p2 that check p1
+                            p1CheckingMoves = gs.getKingCapturingMoves(
+                                currentPlayer=False)  # the moves of p1 that check p2
                             if len(p2CheckingMoves) != 0:
                                 # player1 has put themselves into check
                                 # undo move and switch back players
                                 gs.undoMove()
                                 # now player 1 at turn again
                                 # show player2's checking moves for 1 second
-                                addHighlightedFields(p2CheckingMoves, color=p.Color("red"), toSquareHighlight=False, milliseconds=1000)
+                                addHighlightedFields(p2CheckingMoves, color=p.Color("red"), toSquareHighlight=False,
+                                                     milliseconds=1000)
                                 break
                             print(move)
                             break
@@ -134,16 +171,19 @@ def drawGameState(screen, gs):
     drawPieces(screen, gs.board)
     updateHighlightings(screen)
     drawPointerImage(screen)
+    drawCheckBoxes(screen)
+    updateChessClock(screen, gs.whiteToMove)
     # drawMoveLog(screen)
-    # drawCheckBoxes(screen)
 
 
 def updateHighlightings(screen):
     toPop = []
     for field in HIGHLIGHTED_FIELDS:
         color, milliseconds, timeSet = HIGHLIGHTED_FIELDS[field]
-        now = time()
-        if milliseconds is not None and timeSet*1000 + milliseconds < now*1000:
+        if not showPossibleMoves_checkBox.check and color == p.Color("green"):
+            continue
+        now = time.time()
+        if milliseconds is not None and timeSet * 1000 + milliseconds < now * 1000:
             toPop.append(field)
             continue
         highlightField(field, screen, color=color)
@@ -180,7 +220,7 @@ def addHighlightedFields(moves, color, fromSquareHighlight=True, toSquareHighlig
     :type fromSquareHighlight: bool
     """
     for move in moves:
-        now = time()
+        now = time.time()
         if toSquareHighlight:
             HIGHLIGHTED_FIELDS[move.toSq] = (color, milliseconds, now)
         if fromSquareHighlight:
@@ -207,7 +247,7 @@ def drawBoard(screen):
     colors = ["white", "gray"]
     for x in range(DIMENSION):
         for y in range(DIMENSION):
-            p.draw.rect(screen, p.Color(colors[(x+y) % 2]), p.rect.Rect(x * SQ_SIZE, y * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+            p.draw.rect(screen, p.Color(colors[(x + y) % 2]), p.rect.Rect(x * SQ_SIZE, y * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
 def drawPieces(screen, board):
@@ -224,7 +264,7 @@ def drawPieces(screen, board):
         for y in range(DIMENSION):
             piece = board[y][x]
             if piece != "--":
-                screen.blit(IMAGES[piece], p.Rect(x*SQ_SIZE, y*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                screen.blit(IMAGES[piece], p.Rect(x * SQ_SIZE, y * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
 def drawPointerImage(screen):
@@ -241,7 +281,27 @@ def drawMoveLog(screen):
 
 
 def drawCheckBoxes(screen):
-    screen.blit(pu.checkbox())
+    showPossibleMoves_checkBox.draw(screen)
+    set_minutes_spinner.draw(screen)
+    start_clock_btn.draw(screen)
+
+
+def updateChessClock(screen, whiteToMove):
+    global chess_clock, last_time_chess_clock_updated
+    font = p.font.SysFont("monospace", 37)
+    if chess_clock_running and 0 not in chess_clock:
+        seconds_diff = time.time() - last_time_chess_clock_updated
+        if whiteToMove:
+            chess_clock = (max(chess_clock[0] - seconds_diff, 0), chess_clock[1])
+        else:
+            chess_clock = (chess_clock[0], max(chess_clock[1] - seconds_diff, 0))
+        last_time_chess_clock_updated = time.time()
+    clock_label_white = font.render(time.strftime("%H:%M:%S", time.gmtime(chess_clock[0])), True, p.Color("red" if chess_clock[0] == 0 else "darkgray" if not whiteToMove and chess_clock[1] != 0 or not chess_clock_running else "black"))
+    clock_label_black = font.render(time.strftime("%H:%M:%S", time.gmtime(chess_clock[1])), True, p.Color("red" if chess_clock[1] == 0 else "darkgray" if whiteToMove and chess_clock[0] != 0 or not chess_clock_running else "black"))
+    x = checkBoxPos[0]
+    y = HEIGHT//2 - clock_label_white.get_height()
+    screen.blit(clock_label_white, (x, y + clock_label_white.get_height()))
+    screen.blit(clock_label_black, (x, y))
 
 
 def colorSurface(surface, color):
@@ -267,49 +327,51 @@ def drawLabels(gs):
         # highlight all the player2 kings that are under attack
         addHighlightedFields(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
         if gs.isCheckmate():
-            blitCheckLabel()
+            chess_clock_running = False
+            blitCheckmateLabel()
             return
         else:
             blitCheckLabel()
             return
     elif gs.isStalemate():
+        chess_clock_running = False
         blitStalemateLabel()
 
 
 def blitCheckLabel():
-    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    x = (WIDTH + CONTROL_PANE_WIDTH // 2)
     y = LABEL_Y_POS
     h = FONT.size(CHECK_TEXT)[1]
     w = FONT.size(CHECK_TEXT)[0]
     screen = p.display.get_surface()
-    x_center = x - w//2
-    y_center = y - h//2
+    x_center = x - w // 2
+    y_center = y - h // 2
     color = p.Color(FONT_COLOR)
     label = FONT.render(CHECK_TEXT, True, color)
     screen.blit(label, (x_center, y_center))
 
 
 def blitCheckmateLabel():
-    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    x = (WIDTH + CONTROL_PANE_WIDTH // 2)
     y = LABEL_Y_POS
     h = FONT.size(CHECKMATE_TEXT)[1]
     w = FONT.size(CHECKMATE_TEXT)[0]
     screen = p.display.get_surface()
-    x_center = x - w//2
-    y_center = y - h//2
+    x_center = x - w // 2
+    y_center = y - h // 2
     color = p.Color(FONT_COLOR)
     label = FONT.render(CHECKMATE_TEXT, True, color)
     screen.blit(label, (x_center, y_center))
 
 
 def blitStalemateLabel():
-    x = (WIDTH + CONTROL_PANE_WIDTH//2)
+    x = (WIDTH + CONTROL_PANE_WIDTH // 2)
     y = LABEL_Y_POS
     h = FONT.size(STALEMATE_TEXT)[1]
     w = FONT.size(STALEMATE_TEXT)[0]
     screen = p.display.get_surface()
-    x_center = x - w//2
-    y_center = y - h//2
+    x_center = x - w // 2
+    y_center = y - h // 2
     color = p.Color(FONT_COLOR)
     label = FONT.render(STALEMATE_TEXT, True, color)
     screen.blit(label, (x_center, y_center))
@@ -320,8 +382,6 @@ def cursorOnBoard(screen):
     if pos[0] in range(WIDTH) and pos[1] in range(HEIGHT):
         return True
     return False
-
-
 
 
 if __name__ == "__main__":

@@ -36,10 +36,10 @@ class GameState:
         self.enPassantSquare = None  # here a tuple should be stored representing the square a pawn omitted so that an
         # opponent's pawn can capture this pawn via en passant by checking if this variable is set
         # it is reset to None in the very next move because en passant is only allowed immediately
-        self.piecesMoved = {"wK": False,
-                            "wLR": False,  # left rook
-                            "wRR": False,  # right rook
-                            "bK": False,
+        self.piecesMoved = {"wK": False,  # white king
+                            "wLR": False,  # white left rook
+                            "wRR": False,  # white right rook
+                            "bK": False,  # and so on
                             "bLR": False,
                             "bRR": False}  # keeping track if the rooks or kings have been moved to see if
         # castling is possible
@@ -62,10 +62,6 @@ class GameState:
         fromCol = fromSq[0]
         fromRow = fromSq[1]
         pieceMoved = self.board[fromRow][fromCol]
-
-        # # opponent's piece or vacant
-        # if (pieceMoved[0] != ('w' if self.whiteToMove else 'b')) != opponentsView:
-        #     return possibleMoves
 
         # Pawn
         if pieceMoved[1] == 'p':
@@ -193,17 +189,17 @@ class GameState:
                     possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
             # check if castling is possible
             if pieceMoved[0] == 'w' and not self.piecesMoved["wK"]:  # white king and hasn't moved yet
-                if not self.piecesMoved["wLR"]:  # white left rook not moved yet
+                if not self.piecesMoved["wLR"] and self.board[7][0] == "wR":  # white left rook not moved yet
                     if all(self.board[7][c] == "--" for c in range(1, 4)):  # way between wLR and wK is free
                         possibleMoves.append(Move(fromSq, (2, 7), self, castling=True))
-                if not self.piecesMoved["wRR"]:  # white right rook not moved yet
+                if not self.piecesMoved["wRR"] and self.board[7][7] == "wR":  # white right rook not moved yet
                     if all(self.board[7][c] == "--" for c in range(5, 7)):  # way between wRR and wK is free
                         possibleMoves.append(Move(fromSq, (6, 7), self, castling=True))
             elif pieceMoved[0] == 'b' and not self.piecesMoved["bK"]:  # black king not moved yet
-                if not self.piecesMoved["bLR"]:  # black left rook not moved yet
+                if not self.piecesMoved["bLR"] and self.board[0][0] == "bR":  # black left rook not moved yet
                     if all(self.board[0][c] == "--" for c in range(1, 4)):  # way between bLR and bK is free
                         possibleMoves.append(Move(fromSq, (2, 0), self, castling=True))
-                if not self.piecesMoved["bRR"]:  # black right rook not moved yet
+                if not self.piecesMoved["bRR"] and self.board[0][7] == "bR":  # black right rook not moved yet
                     if all(self.board[0][c] == "--" for c in range(5, 7)):  # way between bRR and bK is free
                         possibleMoves.append(Move(fromSq, (6, 0), self, castling=True))
 
