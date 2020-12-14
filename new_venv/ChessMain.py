@@ -6,6 +6,7 @@ import time
 import pygame as p
 import PygameUtils as pu
 import ChessEngine
+from Scripts.ChessClock import ChessClock
 from Spinner import Spinner
 
 WIDTH = HEIGHT = 512
@@ -26,13 +27,12 @@ BACKGROUND_COLOR = "white"
 FONT = None
 FONT_COLOR = "firebrick"
 LABEL_Y_POS = 80
-chess_clock_running = False
 CHECK = CHECKMATE = STALEMATE = False
-
 checkBoxPos = (WIDTH + CONTROL_PANE_WIDTH // 20, 400)
 
+
 def initializeControlWidgets():
-    global showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, saveButton, loadButton
+    global showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, saveButton, loadButton
     showPossibleMoves_checkBox = pu.checkbox(color=p.Color("black"), x=checkBoxPos[0],
                                              y=checkBoxPos[1], width=15,
                                              height=15, size=11, text="Show possible moves", check=True,
@@ -45,7 +45,6 @@ def initializeControlWidgets():
     start_clock_btn = pu.button(p.Color("lightgreen"), x=checkBoxPos[0] + set_minutes_spinner.width + 5,
                                 y=set_minutes_spinner.top, width=80, height=20, text=START_CLOCK, size=11,
                                 font="dejavusans")
-    chess_clock = (set_minutes_spinner.value * 60, set_minutes_spinner.value * 60)  # (whitesTime, blacksTime)
 
 
 
@@ -65,8 +64,7 @@ def main():
     main driver, handle input and update graphics
     """
     global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, \
-            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, \
-            chess_clock_running, last_time_chess_clock_updated
+            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
@@ -78,6 +76,7 @@ def main():
     running = True
     player_clicks = []  # two  tuples: [(6, 4), (4, 4)]
     initializeControlWidgets()
+    chessClock = ChessClock((7*60, 7*60), gs.whiteToMove)
 
     while running:
         for e in p.event.get():
@@ -89,18 +88,11 @@ def main():
                 if not cursorOnBoard(screen):
                     # check if spinner was clicked
                     if set_minutes_spinner.onClick(p.mouse.get_pos()):
-                        chess_clock_running = False
-                        chess_clock = (set_minutes_spinner.value*60, set_minutes_spinner.value*60)
+                        chessClock.reset((set_minutes_spinner.value*60, set_minutes_spinner.value*60))
                         start_clock_btn.text = START_CLOCK
-                    # check if start clock button was clicked
+                    # check if start chess clock button was clicked
                     elif start_clock_btn.isOver(p.mouse.get_pos()):
-                        if chess_clock_running:
-                            chess_clock_running = False
-                            start_clock_btn.text = RESUME_CLOCK
-                        else:
-                            chess_clock_running = True
-                            start_clock_btn.text = PAUSE_CLOCK
-                        last_time_chess_clock_updated = time.time()
+                        chessClock.startStop()
                     # check if checkBox was clicked
                     elif showPossibleMoves_checkBox.isOver(p.mouse.get_pos()):
                         showPossibleMoves_checkBox.check = not showPossibleMoves_checkBox.check
@@ -157,7 +149,7 @@ def main():
 
         clock.tick(MAX_FPS)
         p.display.flip()
-        drawGameState(screen, gs)
+        drawGameState(screen, gs, chessClock)
 
 
 def makeMoveAndHandleCheck(gs, move):
@@ -170,7 +162,7 @@ def undoMoveAndHandleCheck(gs):
     handleIfCheck(gs)
 
 
-def drawGameState(screen, gs):
+def drawGameState(screen, gs, chessClock):
     """
     responsible for all the graphics in current game state
     :param gs: the gamestate to be displayed
@@ -184,7 +176,7 @@ def drawGameState(screen, gs):
     updateHighlightings(screen)
     drawPointerImage(screen)
     drawCheckBoxes(screen)
-    updateChessClock(screen, gs.whiteToMove)
+    displayChessClock(screen, chessClock, gs.whiteToMove)
     blitCurrentCheckLabels()
     # drawMoveLog(screen)
 
@@ -291,6 +283,7 @@ def drawPointerImage(screen):
 
 
 def drawMoveLog(screen):
+    # TODO
     pass
 
 
@@ -301,20 +294,17 @@ def drawCheckBoxes(screen):
     toddlerChess_checkBox.draw(screen)
 
 
-def updateChessClock(screen, whiteToMove):
-    global chess_clock, last_time_chess_clock_updated
+def displayChessClock(screen, chessClock, whiteToMove):
     font = p.font.SysFont("monospace", 37)
-    if chess_clock_running and 0 not in chess_clock:
-        seconds_diff = time.time() - last_time_chess_clock_updated
-        if whiteToMove:
-            chess_clock = (max(chess_clock[0] - seconds_diff, 0), chess_clock[1])
-        else:
-            chess_clock = (chess_clock[0], max(chess_clock[1] - seconds_diff, 0))
-        last_time_chess_clock_updated = time.time()
-    clock_label_white = font.render(time.strftime("%H:%M:%S", time.gmtime(chess_clock[0])), True, p.Color("red" if chess_clock[0] == 0 else "darkgray" if not whiteToMove and chess_clock[1] != 0 or not chess_clock_running else "black"))
-    clock_label_black = font.render(time.strftime("%H:%M:%S", time.gmtime(chess_clock[1])), True, p.Color("red" if chess_clock[1] == 0 else "darkgray" if whiteToMove and chess_clock[0] != 0 or not chess_clock_running else "black"))
+    chessClockTime = chessClock.getTime()
+    clock_label_white = font.render(time.strftime("%H:%M:%S", time.gmtime(chessClockTime[0])), True, p.Color(
+        "red" if chessClockTime[0] == 0 else "darkgray" if not whiteToMove and chessClockTime[
+            1] != 0 or not chessClock.running else "black"))
+    clock_label_black = font.render(time.strftime("%H:%M:%S", time.gmtime(chessClockTime[1])), True, p.Color(
+        "red" if chessClockTime[1] == 0 else "darkgray" if whiteToMove and chessClockTime[
+            0] != 0 or not chessClock.running else "black"))
     x = checkBoxPos[0]
-    y = HEIGHT//2 - clock_label_white.get_height()
+    y = HEIGHT // 2 - clock_label_white.get_height()
     screen.blit(clock_label_white, (x, y + clock_label_white.get_height()))
     screen.blit(clock_label_black, (x, y))
 
@@ -408,6 +398,10 @@ def cursorOnBoard(screen):
     if pos[0] in range(WIDTH) and pos[1] in range(HEIGHT):
         return True
     return False
+
+
+def saveGame(gs, chessClock):
+    pass
 
 
 if __name__ == "__main__":
