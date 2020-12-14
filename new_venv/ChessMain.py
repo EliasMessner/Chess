@@ -27,8 +27,26 @@ FONT = None
 FONT_COLOR = "firebrick"
 LABEL_Y_POS = 80
 chess_clock_running = False
+CHECK = CHECKMATE = STALEMATE = False
 
 checkBoxPos = (WIDTH + CONTROL_PANE_WIDTH // 20, 400)
+
+def initializeControlWidgets():
+    global showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, saveButton, loadButton
+    showPossibleMoves_checkBox = pu.checkbox(color=p.Color("black"), x=checkBoxPos[0],
+                                             y=checkBoxPos[1], width=15,
+                                             height=15, size=11, text="Show possible moves", check=True,
+                                             font="dejavusans")
+    toddlerChess_checkBox = pu.checkbox(color=p.Color("black"), x=checkBoxPos[0],
+                                        y=checkBoxPos[1] + 20, width=15,
+                                        height=15, size=11, text="Toddler-Chess", check=False,
+                                        font="dejavusans")
+    set_minutes_spinner = Spinner(checkBoxPos[0], checkBoxPos[1] - 350, width=100, height=20, value=7)
+    start_clock_btn = pu.button(p.Color("lightgreen"), x=checkBoxPos[0] + set_minutes_spinner.width + 5,
+                                y=set_minutes_spinner.top, width=80, height=20, text=START_CLOCK, size=11,
+                                font="dejavusans")
+    chess_clock = (set_minutes_spinner.value * 60, set_minutes_spinner.value * 60)  # (whitesTime, blacksTime)
+
 
 
 def loadImages():
@@ -46,7 +64,9 @@ def main():
     """
     main driver, handle input and update graphics
     """
-    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, showPossibleMoves_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, chess_clock_running, last_time_chess_clock_updated
+    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, \
+            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, chess_clock, \
+            chess_clock_running, last_time_chess_clock_updated
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
@@ -57,15 +77,7 @@ def main():
     loadImages()
     running = True
     player_clicks = []  # two  tuples: [(6, 4), (4, 4)]
-    showPossibleMoves_checkBox = pu.checkbox(color=p.Color("black"), x=checkBoxPos[0],
-                                             y=checkBoxPos[1], width=15,
-                                             height=15, size=11, text="Show possible moves", check=True,
-                                             font="dejavusans")
-    set_minutes_spinner = Spinner(checkBoxPos[0], checkBoxPos[1] - 350, width=100, height=20, value=7)
-    start_clock_btn = pu.button(p.Color("lightgreen"), x=checkBoxPos[0] + set_minutes_spinner.width + 5,
-                                y=set_minutes_spinner.top, width=80, height=20, text=START_CLOCK, size=11,
-                                font="dejavusans")
-    chess_clock = (set_minutes_spinner.value * 60, set_minutes_spinner.value * 60)  # (whitesTime, blacksTime)
+    initializeControlWidgets()
 
     while running:
         for e in p.event.get():
@@ -80,9 +92,8 @@ def main():
                         chess_clock_running = False
                         chess_clock = (set_minutes_spinner.value*60, set_minutes_spinner.value*60)
                         start_clock_btn.text = START_CLOCK
-                        continue
                     # check if start clock button was clicked
-                    if start_clock_btn.isOver(p.mouse.get_pos()):
+                    elif start_clock_btn.isOver(p.mouse.get_pos()):
                         if chess_clock_running:
                             chess_clock_running = False
                             start_clock_btn.text = RESUME_CLOCK
@@ -91,12 +102,15 @@ def main():
                             start_clock_btn.text = PAUSE_CLOCK
                         last_time_chess_clock_updated = time.time()
                     # check if checkBox was clicked
-                    if showPossibleMoves_checkBox.isOver(p.mouse.get_pos()):
+                    elif showPossibleMoves_checkBox.isOver(p.mouse.get_pos()):
                         showPossibleMoves_checkBox.check = not showPossibleMoves_checkBox.check
+                    elif toddlerChess_checkBox.isOver(p.mouse.get_pos()):
+                        toddlerChess_checkBox.check = not toddlerChess_checkBox.check
                     continue
                 (col, row) = getSquareUnderCursor()
                 POINTER_PIECE = gs.board[row][col]
-                if (POINTER_PIECE[0] == 'w') != gs.whiteToMove:
+                allyColor = 'w' if gs.whiteToMove else 'b'
+                if POINTER_PIECE[0] != allyColor:
                     POINTER_PIECE = "--"
                     if len(player_clicks) == 0:  # player did not click on an allied piece in the first click
                         break
@@ -108,29 +122,18 @@ def main():
                 elif len(player_clicks) == 2:  # second click
                     clearHighlightedFields()
                     validMoves = gs.getValidMoves(player_clicks[0])
-                    # iterate valid moves, if the move that the player selected is among them, execute the move
-                    for move in validMoves:
-                        if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
-                            # for more clarity in the code we call the now at turn player "player1" and the other
-                            # one "player2" within this scope
-                            # player1 chose this move
-                            gs.makeMove(move)  # make move and switch players
-                            # now player2 turn
-                            p2CheckingMoves = gs.getKingCapturingMoves(
-                                currentPlayer=True)  # the moves of p2 that check p1
-                            p1CheckingMoves = gs.getKingCapturingMoves(
-                                currentPlayer=False)  # the moves of p1 that check p2
-                            if len(p2CheckingMoves) != 0:
-                                # player1 has put themselves into check
-                                # undo move and switch back players
-                                gs.undoMove()
-                                # now player 1 at turn again
-                                # show player2's checking moves for 1 second
-                                addHighlightedFields(p2CheckingMoves, color=p.Color("red"), toSquareHighlight=False,
-                                                     milliseconds=1000)
-                                break
-                            print(move)
-                            break
+                    if not toddlerChess_checkBox.check:
+                        # validate the move:
+                        for move in validMoves:
+                            if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
+                                # player chose this move
+                                makeMoveAndHandleCheck(gs, move)  # make move and switch players
+                                print(move)
+                        break
+                    else:
+                        move = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
+                        makeMoveAndHandleCheck(gs, move)  # make move and switch players
+                        print(move)
                     #  reset the variables
                     player_clicks = []
                     POINTER_PIECE = "--"
@@ -147,14 +150,24 @@ def main():
 
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
-                    gs.undoMove()
                     clearHighlightedFields()
+                    undoMoveAndHandleCheck(gs)
                 if e.key == p.K_l:
                     gs.printMoveLog()
 
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gs)
+
+
+def makeMoveAndHandleCheck(gs, move):
+    gs.makeMove(move)
+    handleIfCheck(gs)
+
+
+def undoMoveAndHandleCheck(gs):
+    gs.undoMove()
+    handleIfCheck(gs)
 
 
 def drawGameState(screen, gs):
@@ -166,13 +179,13 @@ def drawGameState(screen, gs):
     :type screen: surface
     """
     screen.fill(BACKGROUND_COLOR)
-    drawLabels(gs)
     drawBoard(screen)
     drawPieces(screen, gs.board)
     updateHighlightings(screen)
     drawPointerImage(screen)
     drawCheckBoxes(screen)
     updateChessClock(screen, gs.whiteToMove)
+    blitCurrentCheckLabels()
     # drawMoveLog(screen)
 
 
@@ -181,6 +194,7 @@ def updateHighlightings(screen):
     for field in HIGHLIGHTED_FIELDS:
         color, milliseconds, timeSet = HIGHLIGHTED_FIELDS[field]
         if not showPossibleMoves_checkBox.check and color == p.Color("green"):
+            # Green highlights are for possible moves only. Continue if possibleMoves-checkbox is off
             continue
         now = time.time()
         if milliseconds is not None and timeSet * 1000 + milliseconds < now * 1000:
@@ -284,6 +298,7 @@ def drawCheckBoxes(screen):
     showPossibleMoves_checkBox.draw(screen)
     set_minutes_spinner.draw(screen)
     start_clock_btn.draw(screen)
+    toddlerChess_checkBox.draw(screen)
 
 
 def updateChessClock(screen, whiteToMove):
@@ -321,21 +336,32 @@ def getSquareUnderCursor():
     return col, row
 
 
-def drawLabels(gs):
+def handleIfCheck(gs):
+    global chess_clock_running, CHECKMATE, STALEMATE, CHECK
+    CHECKMATE = CHECK = STALEMATE = False
     p1CheckingMoves = gs.getKingCapturingMoves(currentPlayer=False)  # the moves of enemy that check current player
     if len(p1CheckingMoves) != 0:  # check or checkmate
         # highlight all the player2 kings that are under attack
         addHighlightedFields(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
         if gs.isCheckmate():
             chess_clock_running = False
-            blitCheckmateLabel()
+            CHECKMATE = True
             return
         else:
-            blitCheckLabel()
+            CHECK = True
             return
     elif gs.isStalemate():
         chess_clock_running = False
+        STALEMATE = True
+
+
+def blitCurrentCheckLabels():
+    if STALEMATE:
         blitStalemateLabel()
+    elif CHECK:
+        blitCheckLabel()
+    elif CHECKMATE:
+        blitCheckmateLabel()
 
 
 def blitCheckLabel():

@@ -29,6 +29,16 @@ class GameState:
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
+        self.board = [
+            ["--", "--", "bK", "bR", "--", "bB", "bN", "bR"],
+            ["bp", "bp", "bp", "--", "--", "--", "bp", "bp"],
+            ["--", "--", "--", "--", "--", "bp", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["bB", "--", "bN", "wB", "--", "--", "--", "--"],
+            ["wp", "--", "wp", "--", "--", "wN", "--", "--"],
+            ["--", "--", "--", "--", "--", "wp", "wp", "wp"],
+            ["wR", "wQ", "--", "--", "--", "wR", "wK", "--"]
+        ]
         self.whiteToMove = True
         self.moveLog = []
         self.possibleMoves = []
@@ -235,7 +245,8 @@ class GameState:
         validMoves = []
         for move in self.possibleMoves:
             # check if the move starts at the specified square and if it is a piece of the player at turn
-            if move.fromSq == fromSq and ((move.pieceMoved[0] == 'w') == self.whiteToMove):
+            allyColor = 'w' if self.whiteToMove else 'b'
+            if move.fromSq == fromSq and move.pieceMoved[0] == allyColor:
                 # we make and undo the move to see if it puts us in check
                 self.makeMove(move, testMove=True)
                 selfCheck = self.isCheck(currentPlayer=False)
@@ -313,13 +324,12 @@ class GameState:
             # taking care of en passant
             self.enPassantSquare = move.enPassantSquare
             if move.enPassant:
-                self.enPassantSquare = move.enPassantSquare
                 if move.pieceMoved[0] == 'w':
-                    squareCapturedByEnpassant = move.toCol, move.toRow + 1
-                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "bp"
+                    pieceCapturedByEnpassant = move.toCol, move.toRow + 1
+                    self.board[pieceCapturedByEnpassant[1]][pieceCapturedByEnpassant[0]] = "bp"
                 else:
-                    squareCapturedByEnpassant = move.toCol, move.toRow - 1
-                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "wp"
+                    pieceCapturedByEnpassant = move.toCol, move.toRow - 1
+                    self.board[pieceCapturedByEnpassant[1]][pieceCapturedByEnpassant[0]] = "wp"
             # taking care of castling
             self.handleCastling(move, undo=True)
         self.whiteToMove = not self.whiteToMove
@@ -400,7 +410,8 @@ class GameState:
         # look at possible moves to see if we are checked
         for move in self.possibleMoves:
             # filter for the color of the piece
-            if (move.pieceMoved[0] == 'w') == (self.whiteToMove if currentPlayer else not self.whiteToMove):
+            allyColor, oppoColor = ('w', 'b') if self.whiteToMove else ('b', 'w')
+            if move.pieceMoved[0] == (allyColor if currentPlayer else oppoColor):
                 # see if King is under attack
                 if move.pieceCaptured[1] == 'K' and move.pieceCaptured[0] != move.pieceMoved[0]:
                     checking_moves.append(move)
@@ -447,12 +458,12 @@ class Move:
         self.toRow = toSq[1]
         self.pieceMoved = gameState.board[self.fromRow][self.fromCol]
         self.board = []
-        # copy the gameState's boad by value
+        # copy the gameState's boad by value - represents the board before the move was made
         for i in range(len(gameState.board)):
             self.board.append(gameState.board[i][:])
         self.enPassant = enPassant
         self.pieceCaptured = gameState.board[self.toRow][self.toCol]
-        self.enPassantSquare = gameState.enPassantSquare
+        self.enPassantSquare = gameState.enPassantSquare  # the e.p. square before the move was made
         self.castling = castling
         self.isFirstMoveWithBlackLeftRook = self.fromSq == (0, 0) and not gameState.piecesMoved["bLR"]
         self.isFirstMoveWithBlackRightRook = self.fromSq == (7, 0) and not gameState.piecesMoved["bRR"]
@@ -498,5 +509,5 @@ class Move:
 
 def indexToChessNotation(square):
     files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-    ranks = range(1, 9)
+    ranks = range(8, 0, -1)
     return files[square[0]] + str(ranks[square[1]])
