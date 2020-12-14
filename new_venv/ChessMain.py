@@ -2,9 +2,14 @@
 Handle user input and display current GameState Object
 """
 import time
-
 import pygame as p
 import PygameUtils as pu
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter import messagebox
+import json
+import os
+
 import ChessEngine
 from Scripts.ChessClock import ChessClock
 from Spinner import Spinner
@@ -45,7 +50,10 @@ def initializeControlWidgets():
     start_clock_btn = pu.button(p.Color("lightgreen"), x=checkBoxPos[0] + set_minutes_spinner.width + 5,
                                 y=set_minutes_spinner.top, width=80, height=20, text=START_CLOCK, size=11,
                                 font="dejavusans")
-
+    saveButton = pu.button(p.Color("lightgray"), x=WIDTH+15, y=HEIGHT-30, width=80, height=20, text="Save", size=11,
+                                font="dejavusans")
+    loadButton = pu.button(p.Color("lightgray"), x=WIDTH + saveButton.width + 20, y=HEIGHT - 30, width=80, height=20, text="Load", size=11,
+                           font="dejavusans")
 
 
 def loadImages():
@@ -64,7 +72,8 @@ def main():
     main driver, handle input and update graphics
     """
     global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, \
-            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn
+            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, saveButton, \
+            loadButton
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
@@ -93,11 +102,18 @@ def main():
                     # check if start chess clock button was clicked
                     elif start_clock_btn.isOver(p.mouse.get_pos()):
                         chessClock.startStop()
+                        start_clock_btn.text = PAUSE_CLOCK if chessClock.running else RESUME_CLOCK
                     # check if checkBox was clicked
                     elif showPossibleMoves_checkBox.isOver(p.mouse.get_pos()):
                         showPossibleMoves_checkBox.check = not showPossibleMoves_checkBox.check
                     elif toddlerChess_checkBox.isOver(p.mouse.get_pos()):
                         toddlerChess_checkBox.check = not toddlerChess_checkBox.check
+                    # save game clicked?
+                    elif saveButton.isOver(p.mouse.get_pos()):
+                        onClickSaveBtn(gs, chessClock)
+                    # load game clicked?
+                    elif loadButton.isOver(p.mouse.get_pos()):
+                        onClickLoadBtn(gs, chessClock)
                     continue
                 (col, row) = getSquareUnderCursor()
                 POINTER_PIECE = gs.board[row][col]
@@ -114,18 +130,18 @@ def main():
                 elif len(player_clicks) == 2:  # second click
                     clearHighlightedFields()
                     validMoves = gs.getValidMoves(player_clicks[0])
+                    moveToBeMade = None
                     if not toddlerChess_checkBox.check:
                         # validate the move:
                         for move in validMoves:
                             if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
                                 # player chose this move
-                                makeMoveAndHandleCheck(gs, move)  # make move and switch players
-                                print(move)
-                        break
+                                moveToBeMade = move
                     else:
-                        move = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
-                        makeMoveAndHandleCheck(gs, move)  # make move and switch players
-                        print(move)
+                        moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
+                    if moveToBeMade is not None:
+                        makeMoveAndHandleCheck(gs, moveToBeMade)  # make move and switch players
+                        print(moveToBeMade)
                     #  reset the variables
                     player_clicks = []
                     POINTER_PIECE = "--"
@@ -137,7 +153,7 @@ def main():
                 if len(player_clicks) == 0:
                     clearHighlightedFields(p.Color("green"))
                     validMoves = gs.getValidMoves((col, row))
-                    addHighlightedFields(validMoves, p.Color("green"), fromSquareHighlight=False)
+                    addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
                     continue
 
             elif e.type == p.KEYDOWN:
@@ -175,7 +191,7 @@ def drawGameState(screen, gs, chessClock):
     drawPieces(screen, gs.board)
     updateHighlightings(screen)
     drawPointerImage(screen)
-    drawCheckBoxes(screen)
+    drawControlWidgets(screen)
     displayChessClock(screen, chessClock, gs.whiteToMove)
     blitCurrentCheckLabels()
     # drawMoveLog(screen)
@@ -213,7 +229,7 @@ def highlightField(field, screen, color):
     screen.blit(coloredHighlight, p.Rect(col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
-def addHighlightedFields(moves, color, fromSquareHighlight=True, toSquareHighlight=True, milliseconds=None):
+def addHighlightedMoves(moves, color, fromSquareHighlight=True, toSquareHighlight=True, milliseconds=None):
     """
     :param moves: the moves which should be highlighted
     :type moves: list
@@ -287,11 +303,13 @@ def drawMoveLog(screen):
     pass
 
 
-def drawCheckBoxes(screen):
+def drawControlWidgets(screen):
     showPossibleMoves_checkBox.draw(screen)
     set_minutes_spinner.draw(screen)
     start_clock_btn.draw(screen)
     toddlerChess_checkBox.draw(screen)
+    saveButton.draw(screen)
+    loadButton.draw(screen)
 
 
 def displayChessClock(screen, chessClock, whiteToMove):
@@ -332,7 +350,7 @@ def handleIfCheck(gs):
     p1CheckingMoves = gs.getKingCapturingMoves(currentPlayer=False)  # the moves of enemy that check current player
     if len(p1CheckingMoves) != 0:  # check or checkmate
         # highlight all the player2 kings that are under attack
-        addHighlightedFields(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
+        addHighlightedMoves(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
         if gs.isCheckmate():
             chess_clock_running = False
             CHECKMATE = True
@@ -400,8 +418,45 @@ def cursorOnBoard(screen):
     return False
 
 
-def saveGame(gs, chessClock):
-    pass
+def onClickSaveBtn(gs, chessClock):
+    Tk().withdraw()
+    filepath = asksaveasfilename(initialdir=os.getcwd(), title = "Select file", initialfile="gameState.json", filetypes=[("JSON Files", "*.json")])
+    if filepath is None or filepath == "":
+        return
+    jsonData = {
+        "board": gs.board,
+        "whiteToMove": gs.whiteToMove,
+        "enPassantSquare": gs.enPassantSquare,
+        "piecesMoved": gs.piecesMoved,
+        "chessClockTime": chessClock.currentTime
+    }
+    with open(filepath, 'w') as file:
+        json.dump(jsonData, file, sort_keys=True, indent=4)
+
+
+def onClickLoadBtn(gs, chessClock):
+    Tk().withdraw()
+    filepath = askopenfilename(filetypes=[("JSON Files", "*.json")])
+    if filepath is None:
+        return
+    jsonData = None
+    with open(filepath, 'r') as file:
+        try:
+            jsonData = json.loads(file.read())
+        except json.decoder.JSONDecodeError:
+            messagebox.showinfo("Bad File", "Could not load game from this file. File seems empty or formatted wrong")
+            return
+    try:
+        gs.board = jsonData["board"]
+        gs.whiteToMove = jsonData["whiteToMove"]
+        gs.enPassantSquare = jsonData["enPassantSquare"]
+        gs.piecesMoved = jsonData["piecesMoved"]
+        chessClock.reset(jsonData["chessClockTime"])
+        gs.updatePossibleMoves()
+        gs.updateValidMoves()
+    except KeyError:
+        messagebox.showinfo("Bad File", "Could not load game from this file. The file does not contain all the "
+                                        "necessary information")
 
 
 if __name__ == "__main__":

@@ -162,7 +162,7 @@ class TestChessEngine(unittest.TestCase):
         whiteLeftBishopMakeSpace = Move((2, 7), (3, 6), self.gs)
         self.assertIn(whiteLeftBishopMakeSpace, self.gs.validMoves)
         self.gs.makeMove(whiteLeftBishopMakeSpace)
-        self.assertEqual(self.gs.board, [
+        self.assertEqual([
             ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
             ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
             ["bN", "--", "--", "--", "--", "bN", "--", "--"],
@@ -171,7 +171,7 @@ class TestChessEngine(unittest.TestCase):
             ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
             ["wp", "wp", "wp", "wB", "--", "wp", "wp", "wp"],
             ["wR", "--", "--", "--", "wK", "wB", "--", "wR"]
-        ])
+        ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
         self.gs.whiteToMove = True
         self.gs.updateValidMoves()
@@ -180,7 +180,7 @@ class TestChessEngine(unittest.TestCase):
         whiteRightBishopMakeSpace = Move((5, 7), (4, 6), self.gs)
         self.assertIn(whiteRightBishopMakeSpace, self.gs.validMoves)
         self.gs.makeMove(whiteRightBishopMakeSpace)
-        self.assertEqual(self.gs.board, [
+        self.assertEqual([
             ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
             ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
             ["bN", "--", "--", "--", "--", "bN", "--", "--"],
@@ -189,7 +189,7 @@ class TestChessEngine(unittest.TestCase):
             ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
             ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
-        ])
+        ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
         self.gs.whiteToMove = True
         self.gs.updateValidMoves()

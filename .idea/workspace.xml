@@ -5,12 +5,7 @@
     <option name="CUSTOM_SCOPE_NAME" value="Current File" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9561f48f-5bea-4f9f-a90c-11f974c27ad9" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/new_venv/Spinner.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_venv/ChessEngine.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessEngine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_venv/ChessMain.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_venv/ChessMain.py" afterDir="false" />
-    </list>
+    <list default="true" id="9561f48f-5bea-4f9f-a90c-11f974c27ad9" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -26,6 +21,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="UPDATE_TYPE" value="MERGE" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/new_venv/test_chessEngine.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/new_venv/Scripts/ChessClock.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/new_venv/ChessMain.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/new_venv/ChessEngine.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProjectId" id="1k1AiBkke1IeZ5Nvca51HcvhHnS" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -49,7 +50,7 @@
       <recent name="C:\Users\elias\PycharmProjects\Chess\new_venv\images" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for test_chessEngine.TestChessEngine.test_castling">
+  <component name="RunManager" selected="Python.ChessMain">
     <configuration name="ChessMain" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="Chess" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -146,121 +147,6 @@
       <updated>1604857848046</updated>
     </task>
     <servers />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1605915149842">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605915149842" />
-    <state x="718" y="392" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1" timestamp="1605046214037">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="718" y="392" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605046214037" />
-    <state x="614" y="115" key="CommitChangelistDialog2" timestamp="1605049399144">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="614" y="115" key="CommitChangelistDialog2/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605049399144" />
-    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog" timestamp="1605466836402">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605466836402" />
-    <state x="739" y="275" key="FileChooserDialogImpl" timestamp="1604919910409">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="739" y="275" key="FileChooserDialogImpl/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1604919910409" />
-    <state width="667" height="177" key="GridCell.Tab.-1.bottom" timestamp="1605020180302">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="667" height="177" key="GridCell.Tab.-1.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605020180302" />
-    <state width="667" height="177" key="GridCell.Tab.-1.center" timestamp="1605020180302">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="667" height="177" key="GridCell.Tab.-1.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605020180302" />
-    <state width="667" height="177" key="GridCell.Tab.-1.left" timestamp="1605020180302">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="667" height="177" key="GridCell.Tab.-1.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605020180302" />
-    <state width="667" height="177" key="GridCell.Tab.-1.right" timestamp="1605020180302">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="667" height="177" key="GridCell.Tab.-1.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605020180302" />
-    <state width="1415" height="238" key="GridCell.Tab.0.bottom" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996675873" />
-    <state width="1417" height="359" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.0.center" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.0.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.0.center/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996675873" />
-    <state width="1417" height="359" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.0.left" timestamp="1605997155293">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.0.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155293" />
-    <state width="1002" height="230" key="GridCell.Tab.0.left/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996675873" />
-    <state width="1417" height="359" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.0.right" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.0.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.0.right/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996675873" />
-    <state width="1417" height="359" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.1.bottom" timestamp="1605997155295">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155295" />
-    <state width="1002" height="230" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996682248" />
-    <state width="1417" height="359" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.1.center" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.1.center/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.1.center/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996682248" />
-    <state width="1417" height="359" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.1.left" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.1.left/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.1.left/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996682248" />
-    <state width="1417" height="359" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state width="1415" height="238" key="GridCell.Tab.1.right" timestamp="1605997155294">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1415" height="238" key="GridCell.Tab.1.right/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605997155294" />
-    <state width="1002" height="230" key="GridCell.Tab.1.right/0.0.1920.1040/1920.310.1366.728@1920.310.1366.728" timestamp="1605996682248" />
-    <state width="1417" height="359" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605917583309" />
-    <state x="461" y="163" key="SettingsEditor" timestamp="1605812155420">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="461" y="163" key="SettingsEditor/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605812155420" />
-    <state x="92" y="92" width="1736" height="856" key="ShowDiffWithBranchDialog" timestamp="1605466836402">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="92" y="92" width="1736" height="856" key="ShowDiffWithBranchDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605466836402" />
-    <state x="552" y="254" key="Vcs.Push.Dialog.v2" timestamp="1605049114729">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="552" y="254" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605049114729" />
-    <state x="656" y="345" key="com.intellij.ide.util.TipDialog" timestamp="1605814371266">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="656" y="345" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605814371266" />
-    <state x="656" y="345" key="com.intellij.ide.util.TipDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1605551414419" />
-    <state x="769" y="438" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1605049387987">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="769" y="438" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605049387987" />
-    <state x="667" y="119" width="585" height="801" key="find.popup" timestamp="1605957787719">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="667" y="119" width="585" height="801" key="find.popup/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605957787719" />
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1605468431833">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/1920.310.1366.728@0.0.1920.1040" timestamp="1605468431833" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

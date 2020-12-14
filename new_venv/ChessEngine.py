@@ -9,6 +9,8 @@
 # these possible moves of the opponent may also result into putting the opponent into check,
 # because they don't actually have to be executed in order to check us.
 
+import copy
+
 class GameState:
     """
     This class is responsible for storing all the information about the current state of a chess game and for
@@ -248,9 +250,11 @@ class GameState:
             allyColor = 'w' if self.whiteToMove else 'b'
             if move.fromSq == fromSq and move.pieceMoved[0] == allyColor:
                 # we make and undo the move to see if it puts us in check
+                boardBefore = copy.deepcopy(self.board)
                 self.makeMove(move, testMove=True)
                 selfCheck = self.isCheck(currentPlayer=False)
                 self.undoMove(testMove=True)
+                assert self.board == boardBefore
                 if not selfCheck:
                     validMoves.append(move)
         return validMoves
