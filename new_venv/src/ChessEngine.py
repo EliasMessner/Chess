@@ -10,6 +10,7 @@
 # because they don't actually have to be executed in order to check us.
 
 import copy
+from collections.abc import Iterable
 
 class GameState:
     """
@@ -506,6 +507,8 @@ class Move:
     def __eq__(self, other):
         if isinstance(other, Move):
             return self.fromSq == other.fromSq and self.toSq == other.toSq
+        elif isinstance(other, Iterable) and len(other) == 2:
+            return self.fromSq == other[0] and self.toSq == other[1]
         return False
 
     def pawnMadeTwoSteps(self):
