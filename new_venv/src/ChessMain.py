@@ -110,20 +110,20 @@ def main():
                         toddlerChess_checkBox.check = not toddlerChess_checkBox.check
                     # save game clicked?
                     elif saveButton.isOver(p.mouse.get_pos()):
-                        onClickSaveBtn(gs, chessClock)
+                        saveGame(gs, chessClock)
                     # load game clicked?
                     elif loadButton.isOver(p.mouse.get_pos()):
-                        onClickLoadBtn(gs, chessClock)
+                        loadGame(gs, chessClock)
                 else:
                     (col, row) = getSquareUnderCursor()
                     allyColor = 'w' if gs.whiteToMove else 'b'
                     player_clicks.append((col, row))
                     if len(player_clicks) == 1:  # first click
                         # unless it's toddler chess, break if player clicked on something other than an allied piece
-                        if gs.board[row][col][0] != allyColor and not toddlerChess_checkBox.check:
+                        if gs.getPieceAt(col, row)[0] != allyColor and not toddlerChess_checkBox.check:
                             player_clicks = []
                             break
-                        POINTER_PIECE = gs.board[row][col]
+                        POINTER_PIECE = gs.getPieceAt(col, row)
                         # highlight the clicked field
                         HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time.time())
                     elif len(player_clicks) == 2:  # second click
@@ -135,7 +135,8 @@ def main():
                                 for move in gs.validMoves:
                                     if move == player_clicks:
                                         moveToBeMade = move
-                            else:
+                                        break
+                            else: # toddlerchess
                                 moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
                             if moveToBeMade is not None:
                                 makeMoveSafe(gs, moveToBeMade, chessClock)  # make move and switch players
@@ -418,7 +419,7 @@ def cursorOnBoard(screen):
     return False
 
 
-def onClickSaveBtn(gs, chessClock):
+def saveGame(gs, chessClock):
     Tk().withdraw()
     filepath = asksaveasfilename(initialdir=os.getcwd(), title = "Select file", initialfile="gameState.json", filetypes=[("JSON Files", "*.json")])
     if filepath is None or filepath == "":
@@ -434,7 +435,7 @@ def onClickSaveBtn(gs, chessClock):
         json.dump(jsonData, file, sort_keys=True, indent=4)
 
 
-def onClickLoadBtn(gs, chessClock):
+def loadGame(gs, chessClock):
     Tk().withdraw()
     filepath = askopenfilename(filetypes=[("JSON Files", "*.json")])
     if filepath is None:

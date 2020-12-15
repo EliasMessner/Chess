@@ -59,6 +59,12 @@ class GameState:
         self.updatePossibleMoves()
         self.updateValidMoves()
 
+    def getPieceAt(self, col, row):
+        return self.board[row][col]
+
+    def setPieceAt(self, col, row, piece):
+        self.board[row][col] = piece
+
     def calculatePossibleMoves(self, fromSq):
         """
         Determines possible moves:
@@ -74,7 +80,7 @@ class GameState:
         possibleMoves = []
         fromCol = fromSq[0]
         fromRow = fromSq[1]
-        pieceMoved = self.board[fromRow][fromCol]
+        pieceMoved = self.getPieceAt(fromCol, fromRow)
 
         # Pawn
         if pieceMoved[1] == 'p':
@@ -82,7 +88,7 @@ class GameState:
             if fromRow != (0 if pieceMoved[0] == 'w' else 7):
                 # add the field in front of the pawn if it is vacant
                 rowInFrontOfPawn = fromRow - 1 if pieceMoved[0] == 'w' else fromRow + 1
-                pieceInFrontOfPawn = self.board[rowInFrontOfPawn][fromCol]
+                pieceInFrontOfPawn = self.getPieceAt(fromCol, rowInFrontOfPawn)
                 if pieceInFrontOfPawn == "--":
                     possibleMoves.append(Move(fromSq, (fromCol, rowInFrontOfPawn), self))
                 # add the two fields diagonally in front of the pawn if they have an opponent's piece on it
@@ -91,10 +97,10 @@ class GameState:
                     if fromCol + direction not in range(8):
                         continue
                     # check if they have an opponent's piece on it
-                    if self.board[rowInFrontOfPawn][fromCol + direction][0][0] not in (pieceMoved[0], '-'):
+                    if self.getPieceAt(fromCol + direction, rowInFrontOfPawn)[0]not in (pieceMoved[0], '-'):
                         possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn), self))
                     # check if an enpassant is possible
-                    elif self.board[rowInFrontOfPawn][fromCol + direction] == "--" and \
+                    elif self.getPieceAt(fromCol + direction, rowInFrontOfPawn) == "--" and \
                             (fromCol + direction, rowInFrontOfPawn) == self.enPassantSquare:
                         possibleMoves.append(Move(fromSq, (fromCol + direction, rowInFrontOfPawn),
                                                   self, enPassant=True))
@@ -102,7 +108,7 @@ class GameState:
                 # the pawn are vacant
                 if fromRow == (6 if pieceMoved[0] == 'w' else 1):
                     rowTwoAheadOfPawn = fromRow - 2 if pieceMoved[0] == 'w' else fromRow + 2
-                    pieceTwoAheadOfPawn = self.board[rowTwoAheadOfPawn][fromCol]
+                    pieceTwoAheadOfPawn = self.getPieceAt(fromCol, rowTwoAheadOfPawn)
                     if pieceInFrontOfPawn == pieceTwoAheadOfPawn == "--":
                         possibleMoves.append(Move(fromSq, (fromCol, rowTwoAheadOfPawn), self))
 
@@ -119,11 +125,11 @@ class GameState:
                     if not (checkSq[0] in range(8) and checkSq[1] in range(8)):
                         break
                     # check if there is a piece from the same color as the Rook
-                    if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
+                    if self.getPieceAt(checkSq[0], checkSq[1])[0] == pieceMoved[0]:
                         break
                     possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
                     # check if collision with opponent's piece
-                    if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
+                    if self.getPieceAt(checkSq[0], checkSq[1])[0] not in (pieceMoved[0], '-'):
                         break
 
         # Knight
@@ -139,7 +145,7 @@ class GameState:
                     if row not in range(8) or col not in range(8):
                         continue
                     # assure that there is not a piece from the same color as the knight
-                    if self.board[row][col][0] != pieceMoved[0]:
+                    if self.getPieceAt(col, row)[0] != pieceMoved[0]:
                         possibleMoves.append(Move(fromSq, (col, row), self))
 
         # Bishop
@@ -156,11 +162,11 @@ class GameState:
                         if not (checkSq[0] in range(8) and checkSq[1] in range(8)):
                             break
                         # check if collision with own piece
-                        if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
+                        if self.getPieceAt(checkSq[0], checkSq[1])[0] == pieceMoved[0]:
                             break
                         possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
                         # check if collision with opponent's piece
-                        if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
+                        if self.getPieceAt(checkSq[0], checkSq[1])[0] not in (pieceMoved[0], '-'):
                             break
 
         # Queen
@@ -178,11 +184,11 @@ class GameState:
                         if not (checkSq[0] in range(8) and checkSq[1] in range(8)):
                             break
                         # check if there is a piece from the same color as the Rook
-                        if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
+                        if self.getPieceAt(checkSq[0], checkSq[1])[0] == pieceMoved[0]:
                             break
                         possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
                         # check if collision with opponent's piece
-                        if self.board[checkSq[1]][checkSq[0]][0] not in (pieceMoved[0], '-'):
+                        if self.getPieceAt(checkSq[0], checkSq[1])[0] not in (pieceMoved[0], '-'):
                             break
 
         # King
@@ -197,23 +203,23 @@ class GameState:
                     if not (checkSq[0] in range(8) and checkSq[1] in range(8)):
                         continue
                     # check if there is a piece from the same color as the King
-                    if self.board[checkSq[1]][checkSq[0]][0] == pieceMoved[0]:
+                    if self.getPieceAt(checkSq[0], checkSq[1])[0] == pieceMoved[0]:
                         continue
                     possibleMoves.append(Move(fromSq, (checkSq[0], checkSq[1]), self))
             # check if castling is possible
             if pieceMoved[0] == 'w' and not self.piecesMoved["wK"]:  # white king and hasn't moved yet
-                if not self.piecesMoved["wLR"] and self.board[7][0] == "wR":  # white left rook not moved yet
-                    if all(self.board[7][c] == "--" for c in range(1, 4)):  # way between wLR and wK is free
+                if not self.piecesMoved["wLR"] and self.getPieceAt(0, 7) == "wR":  # white left rook not moved yet
+                    if all(self.getPieceAt(c, 7) == "--" for c in range(1, 4)):  # way between wLR and wK is free
                         possibleMoves.append(Move(fromSq, (2, 7), self, castling=True))
-                if not self.piecesMoved["wRR"] and self.board[7][7] == "wR":  # white right rook not moved yet
-                    if all(self.board[7][c] == "--" for c in range(5, 7)):  # way between wRR and wK is free
+                if not self.piecesMoved["wRR"] and self.getPieceAt(7, 7) == "wR":  # white right rook not moved yet
+                    if all(self.getPieceAt(c, 7) == "--" for c in range(5, 7)):  # way between wRR and wK is free
                         possibleMoves.append(Move(fromSq, (6, 7), self, castling=True))
             elif pieceMoved[0] == 'b' and not self.piecesMoved["bK"]:  # black king not moved yet
-                if not self.piecesMoved["bLR"] and self.board[0][0] == "bR":  # black left rook not moved yet
-                    if all(self.board[0][c] == "--" for c in range(1, 4)):  # way between bLR and bK is free
+                if not self.piecesMoved["bLR"] and self.getPieceAt(0, 0) == "bR":  # black left rook not moved yet
+                    if all(self.getPieceAt(c, 0) == "--" for c in range(1, 4)):  # way between bLR and bK is free
                         possibleMoves.append(Move(fromSq, (2, 0), self, castling=True))
-                if not self.piecesMoved["bRR"] and self.board[0][7] == "bR":  # black right rook not moved yet
-                    if all(self.board[0][c] == "--" for c in range(5, 7)):  # way between bRR and bK is free
+                if not self.piecesMoved["bRR"] and self.getPieceAt(7, 0) == "bR":  # black right rook not moved yet
+                    if all(self.getPieceAt(c, 0) == "--" for c in range(5, 7)):  # way between bRR and bK is free
                         possibleMoves.append(Move(fromSq, (6, 0), self, castling=True))
 
         return possibleMoves
@@ -290,8 +296,8 @@ class GameState:
         :return:
         :rtype:
         """
-        self.board[move.toRow][move.toCol] = move.pieceMoved
-        self.board[move.fromRow][move.fromCol] = "--"
+        self.setPieceAt(move.toCol, move.toRow, move.pieceMoved)
+        self.setPieceAt(move.fromCol, move.fromRow, "--")
         self.moveLog.append(move)
         if not testMove:
             self.handlePawnPromotion()
@@ -303,10 +309,10 @@ class GameState:
             elif move.enPassant:  # the en passant capture itself
                 if move.pieceMoved[0] == 'w':
                     squareCapturedByEnpassant = move.toCol, move.toRow + 1
-                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
+                    self.setPieceAt(squareCapturedByEnpassant[0], squareCapturedByEnpassant[1], "--")
                 else:
                     squareCapturedByEnpassant = move.toCol, move.toRow - 1
-                    self.board[squareCapturedByEnpassant[1]][squareCapturedByEnpassant[0]] = "--"
+                    self.setPieceAt(squareCapturedByEnpassant[0], squareCapturedByEnpassant[1], "--")
             # taking care of castling
             self.handleCastling(move)
         self.whiteToMove = not self.whiteToMove
@@ -322,18 +328,18 @@ class GameState:
         if len(self.moveLog) == 0:
             return
         move = self.moveLog.pop()
-        self.board[move.fromRow][move.fromCol] = move.pieceMoved
-        self.board[move.toRow][move.toCol] = move.pieceCaptured
+        self.setPieceAt(move.fromCol, move.fromRow, move.pieceMoved)
+        self.setPieceAt(move.toCol, move.toRow, move.pieceCaptured)
         if not testMove:
             # taking care of en passant
             self.enPassantSquare = move.enPassantSquare
             if move.enPassant:
                 if move.pieceMoved[0] == 'w':
                     pieceCapturedByEnpassant = move.toCol, move.toRow + 1
-                    self.board[pieceCapturedByEnpassant[1]][pieceCapturedByEnpassant[0]] = "bp"
+                    self.setPieceAt(pieceCapturedByEnpassant[0], pieceCapturedByEnpassant[1], "bp")
                 else:
                     pieceCapturedByEnpassant = move.toCol, move.toRow - 1
-                    self.board[pieceCapturedByEnpassant[1]][pieceCapturedByEnpassant[0]] = "wp"
+                    self.setPieceAt(pieceCapturedByEnpassant[0], pieceCapturedByEnpassant[1], "wp")
             # taking care of castling
             self.handleCastling(move, undo=True)
         self.whiteToMove = not self.whiteToMove
@@ -360,49 +366,49 @@ class GameState:
         if move.castling:
             if not undo:
                 if move.toSq == (2, 7):  # wK with wLR
-                    self.board[7][0] = "--"
-                    self.board[7][3] = "wR"
+                    self.setPieceAt(0, 7, "--")
+                    self.setPieceAt(3, 7, "wR")
                     self.piecesMoved["wLR"] = True
                 elif move.toSq == (6, 7):  # wK with wRR
-                    self.board[7][7] = "--"
-                    self.board[7][5] = "wR"
+                    self.setPieceAt(7, 7, "--")
+                    self.setPieceAt(5, 7, "wR")
                     self.piecesMoved["wRR"] = True
                 elif move.toSq == (2, 0):  # bK with bLR
-                    self.board[0][0] = "--"
-                    self.board[0][3] = "bR"
+                    self.setPieceAt(0, 0, "--")
+                    self.setPieceAt(3, 0, "bR")
                     self.piecesMoved["bLR"] = True
                 elif move.toSq == (6, 0):  # bK with bRR
-                    self.board[0][7] = "--"
-                    self.board[0][5] = "bR"
+                    self.setPieceAt(7, 0, "--")
+                    self.setPieceAt(5, 0, "bR")
                     self.piecesMoved["bRR"] = True
             else:
                 if move.toSq == (2, 7):  # wK with wLR
-                    self.board[7][0] = "wR"
-                    self.board[7][3] = "--"
+                    self.setPieceAt(0, 7, "wR")
+                    self.setPieceAt(3, 7, "--")
                     self.piecesMoved["wLR"] = False
                     self.piecesMoved["wK"] = False
                 elif move.toSq == (6, 7):  # wK with wRR
-                    self.board[7][7] = "wR"
-                    self.board[7][5] = "--"
+                    self.setPieceAt(7, 7, "wR")
+                    self.setPieceAt(5, 7, "--")
                     self.piecesMoved["wRR"] = False
                     self.piecesMoved["wK"] = False
                 elif move.toSq == (2, 0):  # bK with bLR
-                    self.board[0][0] = "bR"
-                    self.board[0][3] = "--"
+                    self.setPieceAt(0, 0, "bR")
+                    self.setPieceAt(3, 0, "--")
                     self.piecesMoved["bLR"] = False
                     self.piecesMoved["bK"] = False
                 elif move.toSq == (6, 0):  # bK with bRR
-                    self.board[0][7] = "bR"
-                    self.board[0][5] = "--"
+                    self.setPieceAt(7, 0, "bR")
+                    self.setPieceAt(5, 0, "--")
                     self.piecesMoved["bRR"] = False
                     self.piecesMoved["bK"] = False
 
     def handlePawnPromotion(self):
         for c in range(8):
-            if self.board[0][c] == "wp":
-                self.board[0][c] = "wQ"
-            if self.board[7][c] == "bp":
-                self.board[7][c] = "bQ"
+            if self.getPieceAt(c, 0) == "wp":
+                self.setPieceAt(c, 0, "wQ")
+            if self.getPieceAt(c, 7) == "bp":
+                self.setPieceAt(c, 7, "bQ")
 
     def getKingCapturingMoves(self, currentPlayer=True):
         """
