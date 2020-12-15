@@ -114,37 +114,38 @@ def main():
                     # load game clicked?
                     elif loadButton.isOver(p.mouse.get_pos()):
                         onClickLoadBtn(gs, chessClock)
-                    continue
-                (col, row) = getSquareUnderCursor()
-                POINTER_PIECE = gs.board[row][col]
-                allyColor = 'w' if gs.whiteToMove else 'b'
-                if POINTER_PIECE[0] != allyColor:
-                    POINTER_PIECE = "--"
-                    if len(player_clicks) == 0:  # player did not click on an allied piece in the first click
-                        break
-                player_clicks.append((col, row))
-                if len(player_clicks) == 1:  # first click
-                    # highlight the clicked field
-                    if not (col, row) in HIGHLIGHTED_FIELDS:
-                        HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time.time())
-                elif len(player_clicks) == 2:  # second click
-                    clearHighlightedFields()
-                    validMoves = gs.getValidMoves(player_clicks[0])
-                    moveToBeMade = None
-                    if not toddlerChess_checkBox.check:
-                        # validate the move:
-                        for move in validMoves:
-                            if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
-                                # player chose this move
-                                moveToBeMade = move
-                    else:
-                        moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
-                    if moveToBeMade is not None:
-                        makeMoveSafe(gs, moveToBeMade, chessClock)  # make move and switch players
-                        print(moveToBeMade)
-                    #  reset the variables
-                    player_clicks = []
-                    POINTER_PIECE = "--"
+                else:
+                    (col, row) = getSquareUnderCursor()
+                    POINTER_PIECE = gs.board[row][col]
+                    allyColor = 'w' if gs.whiteToMove else 'b'
+                    player_clicks.append((col, row))
+                    if len(player_clicks) == 1:  # first click
+                        POINTER_PIECE = gs.board[row][col]
+                        # unless it's toddler chess, break if player clicked on something other than an allied piece
+                        if not toddlerChess_checkBox.check and POINTER_PIECE[0] != allyColor:
+                            POINTER_PIECE = "--"
+                            break
+                        # highlight the clicked field
+                        if not (col, row) in HIGHLIGHTED_FIELDS:
+                            HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time.time())
+                    elif len(player_clicks) == 2:  # second click
+                        clearHighlightedFields()
+                        validMoves = gs.getValidMoves(player_clicks[0])
+                        moveToBeMade = None
+                        if not toddlerChess_checkBox.check:
+                            # validate the move:
+                            for move in validMoves:
+                                if move.fromSq == player_clicks[0] and move.toSq == player_clicks[1]:
+                                    # player chose this move
+                                    moveToBeMade = move
+                        else:
+                            moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
+                        if moveToBeMade is not None:
+                            makeMoveSafe(gs, moveToBeMade, chessClock)  # make move and switch players
+                            print(moveToBeMade)
+                        #  reset the variables
+                        player_clicks = []
+                        POINTER_PIECE = "--"
 
             elif e.type == p.MOUSEMOTION:
                 if not cursorOnBoard(screen):
