@@ -62,7 +62,7 @@ def loadImages():
     """
     pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
+        IMAGES[piece] = p.transform.scale(p.image.load("../images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
     IMAGES["hl"] = p.transform.scale(p.image.load("../images/highlight.png"), (SQ_SIZE, SQ_SIZE))
 
@@ -140,7 +140,7 @@ def main():
                     else:
                         moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
                     if moveToBeMade is not None:
-                        makeMoveAndHandleCheck(gs, moveToBeMade)  # make move and switch players
+                        makeMoveSafe(gs, moveToBeMade, chessClock)  # make move and switch players
                         print(moveToBeMade)
                     #  reset the variables
                     player_clicks = []
@@ -159,7 +159,7 @@ def main():
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
                     clearHighlightedFields()
-                    undoMoveAndHandleCheck(gs)
+                    undoMoveSafe(gs, chessClock)
                 if e.key == p.K_l:
                     gs.printMoveLog()
 
@@ -168,14 +168,16 @@ def main():
         drawGameState(screen, gs, chessClock)
 
 
-def makeMoveAndHandleCheck(gs, move):
+def makeMoveSafe(gs, move, chessClock):
     gs.makeMove(move)
     handleIfCheck(gs)
+    chessClock.switchPlayer()
 
 
-def undoMoveAndHandleCheck(gs):
+def undoMoveSafe(gs, chessClock):
     gs.undoMove()
     handleIfCheck(gs)
+    chessClock.switchPlayer()
 
 
 def drawGameState(screen, gs, chessClock):

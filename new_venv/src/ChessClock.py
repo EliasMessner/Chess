@@ -5,7 +5,7 @@ class ChessClock:
 
     def __init__(self, initTime, whiteToMove=True):
         """
-        :param initTime: a pair of the two time values in seconds, for example (7*60, 7*60) for initial time of 7<
+        :param initTime: a pair of the two time values in seconds, for example (7*60, 7*60) for initial time of 7
         minutes for both players
         :type initTime: (int, int)
         """
@@ -32,6 +32,7 @@ class ChessClock:
         return self.currentTime
 
     def switchPlayer(self):
+        self._update()
         self.whiteToMove = not self.whiteToMove
 
     def reset(self, value):
