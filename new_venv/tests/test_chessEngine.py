@@ -1,5 +1,5 @@
 import unittest
-from ChessEngine import GameState, Move
+from src.ChessEngine import GameState, Move
 
 
 class TestChessEngine(unittest.TestCase):
@@ -8,7 +8,7 @@ class TestChessEngine(unittest.TestCase):
         self.gs = GameState()
 
     def test_enPassant(self):
-        self.gs.board = [
+        self.gs.setBoard([
             ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
             ["bp", "bp", "bp", "bp", "--", "bp", "bp", "bp"],
             ["--", "--", "--", "--", "bp", "--", "--", "--"],
@@ -17,7 +17,7 @@ class TestChessEngine(unittest.TestCase):
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "--", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
-        ]
+        ])
 
         # assert that white is at turn
         self.assertTrue(self.gs.whiteToMove)
@@ -29,8 +29,7 @@ class TestChessEngine(unittest.TestCase):
         self.assertFalse(any(move == blackPawnTwoSqAdvance for move in self.gs.getValidMoves(fromSq)))
 
         # give turn to black and assert that black may now do a two square pawn advance
-        self.gs.whiteToMove = False
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(False)
         self.assertTrue(any(move == blackPawnTwoSqAdvance for move in self.gs.getValidMoves(fromSq)))
 
         # make the move and assert that turns have switched
@@ -77,7 +76,6 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ])
 
-
         # assert that the en passant variable is restored
         self.assertEquals(enPassantSquare, self.gs.enPassantSquare)
 
@@ -103,6 +101,7 @@ class TestChessEngine(unittest.TestCase):
         self.assertTrue(self.gs.whiteToMove)
         self.assertTrue(any(move == whitePawnEnPassant for move in self.gs.getValidMoves(whitePawnEnPassant.fromSq)))
 
+    @unittest.skip("To be implemented")
     def test_pawnPromotion(self):
         self.gs.board = [
             ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
@@ -116,8 +115,9 @@ class TestChessEngine(unittest.TestCase):
         ]
         # TODO
 
+    @unittest.skip("To be implemented")
     def test_get_king_capturing_moves(self):
-        self.gs.board = [
+        self.gs.setBoard([
             ["--", "--", "bK", "bR", "--", "bB", "bN", "bR"],
             ["bp", "bp", "bp", "--", "--", "--", "bp", "bp"],
             ["--", "--", "--", "--", "--", "bp", "--", "--"],
@@ -126,7 +126,7 @@ class TestChessEngine(unittest.TestCase):
             ["wp", "--", "wp", "--", "--", "wN", "--", "--"],
             ["--", "--", "--", "--", "--", "wp", "wp", "wp"],
             ["wR", "wQ", "--", "--", "--", "wR", "wK", "--"]
-        ]
+        ])
         self.assertEqual(self.gs.getKingCapturingMoves(True), [])
         self.assertEqual(self.gs.getKingCapturingMoves(False), [])
 
@@ -136,7 +136,7 @@ class TestChessEngine(unittest.TestCase):
         self.assertEqual(self.gs.getKingCapturingMoves(False), [])  # TODO
 
     def test_castling(self):
-        self.gs.board = [
+        self.gs.setBoard([
             ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
             ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
             ["bN", "--", "--", "--", "--", "bN", "--", "--"],
@@ -145,13 +145,21 @@ class TestChessEngine(unittest.TestCase):
             ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
             ["wp", "wp", "wp", "--", "--", "wp", "wp", "wp"],
             ["wR", "--", "wB", "--", "wK", "wB", "--", "wR"]
-        ]
+        ])
         whiteLeftRookCastling = Move((4, 7), (2, 7), self.gs, castling=True)
         whiteRightRookCastling = Move((4, 7), (6, 7), self.gs, castling=True)
         blackLeftRookCastling = Move((4, 0), (2, 0), self.gs, castling=True)
         blackRightRookCastling = Move((4, 0), (6, 0), self.gs, castling=True)
-
-        self.gs.updateValidMoves()
+        self.assertEqual([
+            ["bR", "--", "bB", "--", "bK", "bB", "--", "bR"],
+            ["bp", "bp", "bp", "--", "--", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "--", "--", "wp", "wp", "wp"],
+            ["wR", "--", "wB", "--", "wK", "wB", "--", "wR"]
+        ], self.gs.board)
         self.assertNotIn(whiteLeftRookCastling, self.gs.possibleMoves)
         self.assertNotIn(whiteRightRookCastling, self.gs.possibleMoves)
         self.assertNotIn(blackLeftRookCastling, self.gs.possibleMoves)
@@ -173,8 +181,7 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "wB", "--", "wR"]
         ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
-        self.gs.whiteToMove = True
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(True)
         self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
 
         whiteRightBishopMakeSpace = Move((5, 7), (4, 6), self.gs)
@@ -191,12 +198,10 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
-        self.gs.whiteToMove = True
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(True)
         self.assertIn(whiteRightRookCastling, self.gs.validMoves)
 
-        self.gs.whiteToMove = False
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(False)
 
         blackLeftBishopMakeSpace = Move((2, 0), (3, 1), self.gs)
         self.assertIn(blackLeftBishopMakeSpace, self.gs.validMoves)
@@ -212,8 +217,7 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ])
         self.assertTrue(self.gs.whiteToMove)
-        self.gs.whiteToMove = False
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(False)
         self.assertIn(blackLeftRookCastling, self.gs.validMoves)
 
         blackRightBishopMakeSpace = Move((5, 0), (4, 1), self.gs)
@@ -230,8 +234,7 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ])
         self.assertTrue(self.gs.whiteToMove)
-        self.gs.whiteToMove = False
-        self.gs.updateValidMoves()
+        self.gs.setWhiteToMove(False)
         self.assertIn(blackRightRookCastling, self.gs.validMoves)
 
 

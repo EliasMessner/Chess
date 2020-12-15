@@ -32,14 +32,14 @@ class GameState:
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
         self.board = [
-            ["--", "--", "bK", "bR", "--", "bB", "bN", "bR"],
-            ["bp", "bp", "bp", "--", "--", "--", "bp", "bp"],
-            ["--", "--", "--", "--", "--", "bp", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["bB", "--", "bN", "wB", "--", "--", "--", "--"],
-            ["wp", "--", "wp", "--", "--", "wN", "--", "--"],
-            ["--", "--", "--", "--", "--", "wp", "wp", "wp"],
-            ["wR", "wQ", "--", "--", "--", "wR", "wK", "--"]
+            ['bR', '--', 'bB', '--', 'bK', 'bB', '--', 'bR'],
+            ['bp', 'bp', 'bp', '--', '--', 'bp', 'bp', 'bp'],
+            ['bN', '--', '--', '--', '--', 'bN', '--', '--'],
+            ['--', '--', 'bQ', 'bp', 'bp', '--', '--', '--'],
+            ['--', '--', '--', '--', 'wp', '--', '--', '--'],
+            ['--', '--', 'wN', 'wp', '--', 'wQ', '--', 'wN'],
+            ['wp', 'wp', 'wp', '--', '--', 'wp', 'wp', 'wp'],
+            ['wR', '--', 'wB', '--', 'wK', 'wB', '--', 'wR']
         ]
         self.whiteToMove = True
         self.moveLog = []
@@ -252,11 +252,10 @@ class GameState:
                 # we make and undo the move to see if it puts us in check
                 boardBefore = copy.deepcopy(self.board)
                 self.makeMove(move, testMove=True)
-                selfCheck = self.isCheck(currentPlayer=False)
-                self.undoMove(testMove=True)
-                assert self.board == boardBefore
-                if not selfCheck:
+                if not self.isCheck(currentPlayer=False):
                     validMoves.append(move)
+                self.undoMove(testMove=True)
+                # assert self.board == boardBefore
         return validMoves
 
     def updateValidMoves(self):
@@ -446,6 +445,16 @@ class GameState:
             print(formation)
             print(move, "\n")
 
+    def setBoard(self, board):
+        self.board = board
+        self.updatePossibleMoves()
+        self.updateValidMoves()
+
+    def setWhiteToMove(self, whiteToMove):
+        self.whiteToMove = whiteToMove
+        self.updatePossibleMoves()
+        self.updateValidMoves()
+
 
 class Move:
     """
@@ -461,10 +470,8 @@ class Move:
         self.toCol = toSq[0]
         self.toRow = toSq[1]
         self.pieceMoved = gameState.board[self.fromRow][self.fromCol]
-        self.board = []
         # copy the gameState's boad by value - represents the board before the move was made
-        for i in range(len(gameState.board)):
-            self.board.append(gameState.board[i][:])
+        self.board = copy.deepcopy(gameState.board)
         self.enPassant = enPassant
         self.pieceCaptured = gameState.board[self.toRow][self.toCol]
         self.enPassantSquare = gameState.enPassantSquare  # the e.p. square before the move was made
