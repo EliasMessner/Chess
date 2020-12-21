@@ -3,7 +3,7 @@ Client for Chess multiplayer version. Handle graphics, server connection and use
 """
 
 import pygame as p
-from ChessMain import loadImages, drawGameState
+from ChessMain import loadImages, drawGraphics
 
 IMAGES = {}
 WIDTH = HEIGHT = 512

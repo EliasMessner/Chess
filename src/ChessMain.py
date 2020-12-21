@@ -13,9 +13,11 @@ import os
 import ChessEngine
 from ChessClock import ChessClock
 from Spinner import Spinner
+from ChessGUI import ChessGUI
 
 
 # ui stuff
+WIDTH = HEIGHT = 512
 START_CLOCK = "Start Clock"
 RESUME_CLOCK = "Resume"
 PAUSE_CLOCK = "Pause"
@@ -29,16 +31,6 @@ LABEL_Y_POS = 80
 CHECK = CHECKMATE = STALEMATE = False
 checkBoxPos = (WIDTH + CONTROL_PANE_WIDTH // 20, 400)
 MAX_FPS = 40
-
-# ui stuff to be outsourced
-WIDTH = HEIGHT = 512
-DIMENSION = 8
-SQ_SIZE = HEIGHT // DIMENSION
-IMAGES = {}
-HIGHLIGHTED_FIELDS = {}  # {(col, row): (color, milliseconds, timeSet)}
-POINTER_PIECE = "--"
-BACKGROUND_COLOR = "white"
-
 
 
 def initializeControlWidgets():
@@ -61,32 +53,20 @@ def initializeControlWidgets():
                            font="dejavusans")
 
 
-def loadImages():
-    """
-    Initialize a global dict of images. Only Called once
-    """
-    pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
-    for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("../images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
-
-    IMAGES["hl"] = p.transform.scale(p.image.load("../images/highlight.png"), (SQ_SIZE, SQ_SIZE))
-
-
 def main():
     """
     main driver, handle input and update graphics
     """
-    global POINTER_PIECE, HIGHLIGHTED_FIELDS, FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, \
-            showPossibleMoves_checkBox, toddlerChess_checkBox, set_minutes_spinner, start_clock_btn, saveButton, \
-            loadButton
+    global FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, showPossibleMoves_checkBox, toddlerChess_checkBox, \
+        set_minutes_spinner, start_clock_btn, saveButton, loadButton
+    chessGUI = ChessGUI()
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
     screen = p.display.set_mode((WIDTH + CONTROL_PANE_WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color(BACKGROUND_COLOR))
+    screen.fill(p.Color(chessGUI.backGroundColor))
     gs = ChessEngine.GameState()
-    loadImages()
     running = True
     player_clicks = []  # two  tuples: [(6, 4), (4, 4)]
     initializeControlWidgets()
@@ -99,7 +79,7 @@ def main():
                 running = False
 
             elif e.type == p.MOUSEBUTTONDOWN:
-                if not cursorOnBoard():
+                if not chessGUI.cursorOnBoard():
                     # check if spinner was clicked
                     if set_minutes_spinner.onClick(p.mouse.get_pos()):
                         chessClock.reset((set_minutes_spinner.value*60, set_minutes_spinner.value*60))
@@ -120,7 +100,7 @@ def main():
                     elif loadButton.isOver(p.mouse.get_pos()):
                         loadGame(gs, chessClock)
                 else:
-                    (col, row) = getSquareUnderCursor()
+                    (col, row) = chessGUI.getSquareUnderCursor()
                     allyColor = 'w' if gs.whiteToMove else 'b'
                     player_clicks.append((col, row))
                     if len(player_clicks) == 1:  # first click
@@ -128,11 +108,11 @@ def main():
                         if gs.getPieceAt(col, row)[0] != allyColor and not toddlerChess_checkBox.check:
                             player_clicks = []
                             break
-                        POINTER_PIECE = gs.getPieceAt(col, row)
+                        chessGUI.pointerPiece = gs.getPieceAt(col, row)
                         # highlight the clicked field
-                        HIGHLIGHTED_FIELDS[(col, row)] = (p.Color("black"), None, time.time())
+                        chessGUI.addHighlighting((col, row), "black")
                     elif len(player_clicks) == 2:  # second click
-                        clearHighlightedFields()
+                        chessGUI.removeHighlightings()
                         if player_clicks[0] != player_clicks[1]:
                             moveToBeMade = None
                             if not toddlerChess_checkBox.check:
@@ -144,172 +124,45 @@ def main():
                             else: # toddlerchess
                                 moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
                             if moveToBeMade is not None:
-                                makeMoveSafe(gs, moveToBeMade, chessClock)  # make move and switch players
+                                makeMoveSafe(gs, moveToBeMade, chessClock, chessGUI)  # make move and switch players
                                 print(moveToBeMade)
                         #  reset the variables
                         player_clicks = []
-                        POINTER_PIECE = "--"
+                        chessGUI.pointerPiece = "--"
 
             elif e.type == p.MOUSEMOTION:
-                if not cursorOnBoard():
+                if not chessGUI.cursorOnBoard():
                     continue
-                (col, row) = getSquareUnderCursor()
+                (col, row) = chessGUI.getSquareUnderCursor()
                 if len(player_clicks) == 0:
-                    clearHighlightedFields(p.Color("green"))
+                    chessGUI.removeHighlightings(p.Color("green"))
                     validMoves = gs.getValidMoves((col, row))
-                    addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
+                    chessGUI.addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
                     continue
 
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:
-                    clearHighlightedFields()
-                    undoMoveSafe(gs, chessClock)
+                    chessGUI.removeHighlightings()
+                    undoMoveSafe(gs, chessClock, chessGUI)
                 if e.key == p.K_l:
                     gs.printMoveLog()
 
         clock.tick(MAX_FPS)
         p.display.flip()
-        drawGraphics(screen, gs, chessClock)
+        chessGUI.drawGameState(screen, gs, p.mouse.get_pos())
+        drawControlWidgets(screen, chessClock, gs.whiteToMove)
 
 
-def makeMoveSafe(gs, move, chessClock):
+def makeMoveSafe(gs, move, chessClock, chessGUI):
     gs.makeMove(move)
-    handleIfCheck(gs)
+    handleIfCheck(gs, chessGUI)
     chessClock.switchPlayer()
 
 
-def undoMoveSafe(gs, chessClock):
+def undoMoveSafe(gs, chessClock, chessGUI):
     gs.undoMove()
-    handleIfCheck(gs)
+    handleIfCheck(gs, chessGUI)
     chessClock.switchPlayer()
-
-
-def drawGraphics(screen, gs, chessClock):
-    """
-    responsible for all the graphics in current game state
-    :param gs: the gamestate to be displayed
-    :type gs: ChessEngine.GameState
-    :param screen: the screen to draw on
-    :type screen: surface
-    """
-    drawGameState(screen, gs)
-    drawControls(screen, chessClock, gs.whiteToMove)
-
-
-def drawControls(screen, chessClock, whiteToMove):
-    drawControlWidgets(screen)
-    displayChessClock(screen, chessClock, whiteToMove)
-    blitCurrentCheckLabels()
-    # drawMoveLog(screen)
-
-
-def drawGameState(screen, gs):
-    screen.fill(BACKGROUND_COLOR)
-    drawBoard(screen)
-    drawPieces(screen, gs.board)
-    updateHighlightings(screen)
-    drawPointerImage(screen)
-
-
-def updateHighlightings(screen):
-    """
-    Deletes all the highlightings that have expired and redraws the remaining ones.
-    :param screen:
-    :type screen:
-    :return:
-    :rtype:
-    """
-    toPop = []
-    for field in HIGHLIGHTED_FIELDS:
-        color, milliseconds, timeSet = HIGHLIGHTED_FIELDS[field]
-        if not showPossibleMoves_checkBox.check and color == p.Color("green"):
-            # Green highlights are for possible moves only. Continue if possibleMoves-checkbox is off
-            continue
-        now = time.time()
-        if milliseconds is not None and timeSet * 1000 + milliseconds < now * 1000:
-            toPop.append(field)
-            continue
-        highlightField(field, screen, color=color)
-    for field in toPop:
-        HIGHLIGHTED_FIELDS.pop(field)
-
-
-def highlightField(field, screen, color):
-    """
-    :param field: the field to be highlighted e.g. (5, 0)
-    :type field: tuple
-    :param screen: the screen to highlight on
-    :type screen: surface
-    :param color: the color to highlight in e.g. (0, 255, 0, 255)
-    :type color: Color
-    """
-    col = field[0]
-    row = field[1]
-    coloredHighlight = IMAGES["hl"].copy()
-    colorSurface(coloredHighlight, color)
-    screen.blit(coloredHighlight, p.Rect(col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-
-def addHighlightedMoves(moves, color, fromSquareHighlight=True, toSquareHighlight=True, milliseconds=None):
-    """
-    :param moves: the moves which should be highlighted
-    :type moves: list
-    :param color: color to use for highlight
-    :type color: Color
-    :param milliseconds: amount of time the highlight should be visible. If None it is visible until removed manually
-    :type milliseconds: int
-    :param fromSquareHighlight: True if start square should also be highlighted, otherwise just end square is
-    highlighted
-    :type fromSquareHighlight: bool
-    """
-    for move in moves:
-        now = time.time()
-        if toSquareHighlight:
-            HIGHLIGHTED_FIELDS[move.toSq] = (color, milliseconds, now)
-        if fromSquareHighlight:
-            HIGHLIGHTED_FIELDS[move.fromSq] = (color, milliseconds, now)
-
-
-def clearHighlightedFields(*colors):
-    toPop = []
-    for field in HIGHLIGHTED_FIELDS:
-        fieldColor, millis, timeSet = HIGHLIGHTED_FIELDS[field]
-        if millis is None:
-            if colors == () or fieldColor in colors:
-                toPop.append(field)
-    for field in toPop:
-        HIGHLIGHTED_FIELDS.pop(field)
-
-
-def drawBoard(screen):
-    """
-    draw the squares on the board
-    """
-    colors = ["white", "gray"]
-    for x in range(DIMENSION):
-        for y in range(DIMENSION):
-            p.draw.rect(screen, p.Color(colors[(x + y) % 2]), p.rect.Rect(x * SQ_SIZE, y * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-
-def drawPieces(screen, board):
-    """
-    draw pieces on the squares of the board
-    """
-    for x in range(DIMENSION):
-        for y in range(DIMENSION):
-            piece = board[y][x]
-            if piece != "--":
-                screen.blit(IMAGES[piece], p.Rect(x * SQ_SIZE, y * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-
-#TODO refactor
-def drawPointerImage(screen):
-    if POINTER_PIECE == "--":
-        return
-    pointer_img = IMAGES[POINTER_PIECE]
-    pointer_img_rect = pointer_img.get_rect()
-    pointer_img_rect.center = p.mouse.get_pos()
-    screen.blit(pointer_img, pointer_img_rect)
 
 
 def drawMoveLog(screen):
@@ -317,13 +170,16 @@ def drawMoveLog(screen):
     pass
 
 
-def drawControlWidgets(screen):
+def drawControlWidgets(screen, chessClock, whiteToMove):
     showPossibleMoves_checkBox.draw(screen)
     set_minutes_spinner.draw(screen)
     start_clock_btn.draw(screen)
     toddlerChess_checkBox.draw(screen)
     saveButton.draw(screen)
     loadButton.draw(screen)
+    displayChessClock(screen, chessClock, whiteToMove)
+    blitCurrentCheckLabels()
+    # drawMoveLog(screen)
 
 
 def displayChessClock(screen, chessClock, whiteToMove):
@@ -341,31 +197,13 @@ def displayChessClock(screen, chessClock, whiteToMove):
     screen.blit(clock_label_black, (x, y))
 
 
-def colorSurface(surface, color):
-    red = color[0]
-    green = color[1]
-    blue = color[2]
-    arr = p.surfarray.pixels3d(surface)
-    arr[:, :, 0] = red
-    arr[:, :, 1] = green
-    arr[:, :, 2] = blue
-
-
-#TODO refactor
-def getSquareUnderCursor():
-    pos = p.mouse.get_pos()
-    col = pos[0] // SQ_SIZE
-    row = pos[1] // SQ_SIZE
-    return col, row
-
-
-def handleIfCheck(gs):
+def handleIfCheck(gs, chessGUI):
     global chess_clock_running, CHECKMATE, STALEMATE, CHECK
     CHECKMATE = CHECK = STALEMATE = False
     p1CheckingMoves = gs.getAttackingMoves(currentPlayer=False, pieceType='K')  # the moves of enemy that check current player
     if len(p1CheckingMoves) != 0:  # check or checkmate
         # highlight all the player2 kings that are under attack
-        addHighlightedMoves(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
+        chessGUI.addHighlightedMoves(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
         if gs.isCheckmate():
             chess_clock_running = False
             CHECKMATE = True
@@ -424,14 +262,6 @@ def blitStalemateLabel():
     color = p.Color(FONT_COLOR)
     label = FONT.render(STALEMATE_TEXT, True, color)
     screen.blit(label, (x_center, y_center))
-
-
-#TODO refactor
-def cursorOnBoard():
-    pos = p.mouse.get_pos()
-    if pos[0] in range(WIDTH) and pos[1] in range(HEIGHT):
-        return True
-    return False
 
 
 def saveGame(gs, chessClock):
