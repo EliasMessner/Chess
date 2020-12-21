@@ -6,7 +6,7 @@ class ChessGUI:
     Generally applicable class for Chess GUI. An instance of this class will hold all the information about the
     current state of the chess game's GUI. This Instance can draw a given gameState onto a pyGame screen.
     """
-    def __init__(self, dimension=(8, 8), width=512, height=width, imgPath="../images/", backGroundColor="white"):
+    def __init__(self, dimension=8, width=512, height=512, imgPath="../images/", backGroundColor="white"):
         self.dimension = dimension
         self.width = width
         self.height = height
@@ -19,8 +19,8 @@ class ChessGUI:
         self.images = {}
         pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
         for piece in pieces:
-            self.images[piece] = p.transform.scale(p.image.load(imgPath + piece + ".png"), (SQ_SIZE, SQ_SIZE))
-        self.images["hl"] = p.transform.scale(p.image.load(imgPath + "highlight.png"), (SQ_SIZE, SQ_SIZE))
+            self.images[piece] = p.transform.scale(p.image.load(imgPath + piece + ".png"), (self.sqSize, self.sqSize))
+        self.images["hl"] = p.transform.scale(p.image.load(imgPath + "highlight.png"), (self.sqSize, self.sqSize))
 
     def drawGameState(self, screen, gameState, mousePos):
         screen.fill(self.backGroundColor)
@@ -29,15 +29,38 @@ class ChessGUI:
         self._updateHighlightings(screen)
         self._drawPointerImage(screen, mousePos)
 
-    def getSquareUnderCursor(pos):
+    def getSquareUnderCursor(self):
+        pos = p.mouse.get_pos()
         col = pos[0] // self.sqSize
         row = pos[1] // self.sqSize
         return col, row
 
-    def cursorOnBoard(self, pos):
+    def cursorOnBoard(self):
+        pos = p.mouse.get_pos()
         if pos[0] in range(self.width) and pos[1] in range(self.height):
             return True
         return False
+
+    def addHighlightedMoves(self, moves, color, fromSquareHighlight=True, toSquareHighlight=True, milliseconds=None):
+        for move in moves:
+            if toSquareHighlight:
+                self.addHighlighting(move.toSq, color, milliseconds)
+            if fromSquareHighlight:
+                self.addHighlighting(move.fromSq, color, milliseconds)
+
+    def addHighlighting(self, field, color, milliseconds=None):
+        now = time.time()
+        self.highlightings[field] = (color, milliseconds, now)
+
+    def removeHighlightings(self, *colors):
+        toPop = []
+        for field in self.highlightings:
+            fieldColor, millis, timeSet = self.highlightings[field]
+            if millis is None:
+                if colors == () or fieldColor in colors:
+                    toPop.append(field)
+        for field in toPop:
+            self.highlightings.pop(field)
 
     def _drawBoard(self, screen):
         colors = ["white", "gray"]
@@ -46,7 +69,7 @@ class ChessGUI:
                 p.draw.rect(screen, p.Color(colors[(x + y) % 2]),
                             p.rect.Rect(x * self.sqSize, y * self.sqSize, self.sqSize, self.sqSize))
 
-    def _drawPieces(self, board):
+    def _drawPieces(self, screen, board):
         for x in range(self.dimension):
             for y in range(self.dimension):
                 piece = board[y][x]
@@ -76,6 +99,7 @@ class ChessGUI:
         screen.blit(coloredHighlight, p.Rect(col * self.sqSize, row * self.sqSize, self.sqSize, self.sqSize))
 
     def _colorSurface(self, surface, color):
+        color = p.Color(color)
         red = color[0]
         green = color[1]
         blue = color[2]
@@ -84,8 +108,8 @@ class ChessGUI:
         arr[:, :, 1] = green
         arr[:, :, 2] = blue
 
-    def _drawPointerImage(screen, pos):
-        if self.pointerPiece == "--" or not self.cursorOnBoard(pos):
+    def _drawPointerImage(self, screen, pos):
+        if self.pointerPiece == "--" or not self.cursorOnBoard():
             return
         pointerImg = self.images[self.pointerPiece]
         pointerImgRect = pointerImg.get_rect()
