@@ -136,8 +136,9 @@ def main():
                 (col, row) = chessGUI.getSquareUnderCursor()
                 if len(player_clicks) == 0:
                     chessGUI.removeHighlightings(p.Color("green"))
-                    validMoves = gs.getValidMoves((col, row))
-                    chessGUI.addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
+                    if showPossibleMoves_checkBox.check:
+                        validMoves = gs.getValidMoves((col, row))
+                        chessGUI.addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
                     continue
 
             elif e.type == p.KEYDOWN:
