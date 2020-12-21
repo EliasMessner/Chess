@@ -210,17 +210,21 @@ class GameState:
             if pieceMoved[0] == 'w' and not self.piecesMoved["wK"]:  # white king and hasn't moved yet
                 if not self.piecesMoved["wLR"] and self.getPieceAt(0, 7) == "wR":  # white left rook not moved yet
                     if all(self.getPieceAt(c, 7) == "--" for c in range(1, 4)):  # way between wLR and wK is free
-                        possibleMoves.append(Move(fromSq, (2, 7), self, castling=True))
+                        if all(not self.isUnderAttack((c, 7)) for c in range(0, 5)):  # none of the fields from wLR to wK are under attack
+                            possibleMoves.append(Move(fromSq, (2, 7), self, castling=True))
                 if not self.piecesMoved["wRR"] and self.getPieceAt(7, 7) == "wR":  # white right rook not moved yet
                     if all(self.getPieceAt(c, 7) == "--" for c in range(5, 7)):  # way between wRR and wK is free
-                        possibleMoves.append(Move(fromSq, (6, 7), self, castling=True))
+                        if all(not self.isUnderAttack((c, 7)) for c in range(4, 8)):  # none of the fields from wRR to wK are under attack
+                            possibleMoves.append(Move(fromSq, (6, 7), self, castling=True))
             elif pieceMoved[0] == 'b' and not self.piecesMoved["bK"]:  # black king not moved yet
                 if not self.piecesMoved["bLR"] and self.getPieceAt(0, 0) == "bR":  # black left rook not moved yet
                     if all(self.getPieceAt(c, 0) == "--" for c in range(1, 4)):  # way between bLR and bK is free
-                        possibleMoves.append(Move(fromSq, (2, 0), self, castling=True))
+                        if all(not self.isUnderAttack((c, 0)) for c in range(0, 5)):  # none of the fields from bLR to bK are under attack
+                            possibleMoves.append(Move(fromSq, (2, 0), self, castling=True))
                 if not self.piecesMoved["bRR"] and self.getPieceAt(7, 0) == "bR":  # black right rook not moved yet
                     if all(self.getPieceAt(c, 0) == "--" for c in range(5, 7)):  # way between bRR and bK is free
-                        possibleMoves.append(Move(fromSq, (6, 0), self, castling=True))
+                        if all(not self.isUnderAttack((c, 0)) for c in range(4, 8)):  # none of the fields from bRR to bK is under attack
+                            possibleMoves.append(Move(fromSq, (6, 0), self, castling=True))
 
         return possibleMoves
 
@@ -410,22 +414,31 @@ class GameState:
             if self.getPieceAt(c, 7) == "bp":
                 self.setPieceAt(c, 7, "bQ")
 
-    def getKingCapturingMoves(self, currentPlayer=True):
+    def getAttackingMoves(self, pieceType=None, currentPlayer=None, square=None):
         """
-        :return: list of moves by current player (or opponent) attacking the other one's king. Empty
-        list if not checked.
+        Returns all the moves by current player (or opponent) attacking the other one's piece(s) of specified type.
+        Especially useful to check if someone is in check.
+        :param: piece: the piece to check for if it is under attack. If None, any piece will be considered
+        :param: currentPlayer: the player which could attack. If None, any player
+        :return: list of moves by current player (or opponent) attacking the other one's piece(s) of specified type.
+        Empty list if not checked.
         :rtype: list
         """
         checking_moves = []
         # look at possible moves to see if we are checked
         for move in self.possibleMoves:
+            if square is not None and square != move.toSq:
+                continue
             # filter for the color of the piece
             allyColor, oppoColor = ('w', 'b') if self.whiteToMove else ('b', 'w')
-            if move.pieceMoved[0] == (allyColor if currentPlayer else oppoColor):
-                # see if King is under attack
-                if move.pieceCaptured[1] == 'K' and move.pieceCaptured[0] != move.pieceMoved[0]:
+            if currentPlayer is None or (move.pieceMoved[0] == (allyColor if currentPlayer else oppoColor)):
+                # see if given piece is under attack
+                if pieceType is None or move.pieceCaptured[1] == pieceType:
                     checking_moves.append(move)
         return checking_moves
+
+    def isUnderAttack(self, square, currentPlayer=False):
+        return len(self.getAttackingMoves(square=square, currentPlayer=currentPlayer)) != 0
 
     def isCheck(self, currentPlayer=True):
         """
@@ -434,7 +447,7 @@ class GameState:
         :return: True if current player is checking the other player, else False.
         :rtype: bool
         """
-        return len(self.getKingCapturingMoves(not currentPlayer)) != 0
+        return len(self.getAttackingMoves(currentPlayer=not currentPlayer, pieceType='K')) != 0
 
     def isStalemate(self):
         return len(self.validMoves) == 0 and not self.isCheck()
