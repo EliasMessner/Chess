@@ -116,7 +116,7 @@ class TestChessEngine(unittest.TestCase):
         # TODO
 
     @unittest.skip("To be implemented")
-    def test_get_king_capturing_moves(self):
+    def test_getAttackingMoves(self):
         self.gs.setBoard([
             ["--", "--", "bK", "bR", "--", "bB", "bN", "bR"],
             ["bp", "bp", "bp", "--", "--", "--", "bp", "bp"],
@@ -127,13 +127,13 @@ class TestChessEngine(unittest.TestCase):
             ["--", "--", "--", "--", "--", "wp", "wp", "wp"],
             ["wR", "wQ", "--", "--", "--", "wR", "wK", "--"]
         ])
-        self.assertEqual(self.gs.getKingCapturingMoves(True), [])
-        self.assertEqual(self.gs.getKingCapturingMoves(False), [])
+        self.assertEqual(self.gs.getAttackingMoves(currentPlayer=True, pieceType='K'), [])
+        self.assertEqual(self.gs.getAttackingMoves(currentPlayer=False, pieceType='K'), [])
 
         moveWhiteQueenSetBlackKingCheck = Move((1, 7), (5, 3), self.gs)
         self.gs.makeMove(moveWhiteQueenSetBlackKingCheck)
-        self.assertEqual(self.gs.getKingCapturingMoves(True), [])
-        self.assertEqual(self.gs.getKingCapturingMoves(False), [])  # TODO
+        self.assertEqual(self.gs.getAttackingMoves(currentPlayer=True, pieceType='K'), [])
+        self.assertEqual(self.gs.getAttackingMoves(currentPlayer=False, pieceType='K'), [])  # TODO
 
     def test_castling(self):
         self.gs.setBoard([
@@ -181,8 +181,15 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "wB", "--", "wR"]
         ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
+
         self.gs.setWhiteToMove(True)
         self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertNotIn(whiteRightRookCastling, self.gs.validMoves)
+
+        self.gs.setWhiteToMove(False)
+        self.assertNotIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertNotIn(blackLeftRookCastling, self.gs.validMoves)
+        self.gs.setWhiteToMove(True)
 
         whiteRightBishopMakeSpace = Move((5, 7), (4, 6), self.gs)
         self.assertIn(whiteRightBishopMakeSpace, self.gs.validMoves)
@@ -198,10 +205,14 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ], self.gs.board)
         self.assertFalse(self.gs.whiteToMove)
+
         self.gs.setWhiteToMove(True)
+        self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
         self.assertIn(whiteRightRookCastling, self.gs.validMoves)
 
         self.gs.setWhiteToMove(False)
+        self.assertNotIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertNotIn(blackLeftRookCastling, self.gs.validMoves)
 
         blackLeftBishopMakeSpace = Move((2, 0), (3, 1), self.gs)
         self.assertIn(blackLeftBishopMakeSpace, self.gs.validMoves)
@@ -217,7 +228,13 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ])
         self.assertTrue(self.gs.whiteToMove)
+
+        self.gs.setWhiteToMove(True)
+        self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertIn(whiteRightRookCastling, self.gs.validMoves)
+
         self.gs.setWhiteToMove(False)
+        self.assertNotIn(blackRightRookCastling, self.gs.validMoves)
         self.assertIn(blackLeftRookCastling, self.gs.validMoves)
 
         blackRightBishopMakeSpace = Move((5, 0), (4, 1), self.gs)
@@ -234,8 +251,88 @@ class TestChessEngine(unittest.TestCase):
             ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
         ])
         self.assertTrue(self.gs.whiteToMove)
+
+        self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertIn(whiteRightRookCastling, self.gs.validMoves)
+
         self.gs.setWhiteToMove(False)
         self.assertIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertIn(blackLeftRookCastling, self.gs.validMoves)
+
+        # now we put some of the fields between rook and king under attack -> castling should no longer be allowed
+        self.gs.setBoard([
+            ["bR", "--", "--", "--", "bK", "--", "--", "bR"],
+            ["bp", "bp", "bp", "bB", "bB", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "bp", "wB", "wB", "wp", "wp", "wp"], # col 2: changed wp to bp
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.gs.setWhiteToMove(True)
+        self.assertNotIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertIn(whiteRightRookCastling, self.gs.validMoves)
+
+        self.gs.setWhiteToMove(False)
+        self.assertIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertIn(blackLeftRookCastling, self.gs.validMoves)
+
+        self.gs.setBoard([
+            ["bR", "--", "--", "--", "bK", "--", "--", "bR"],
+            ["bp", "bp", "bp", "bB", "bB", "bp", "bp", "bp"],
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "bp", "wp", "wp"],  # col 5: changed wp to bp
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.gs.setWhiteToMove(True)
+        self.assertNotIn(whiteLeftRookCastling, self.gs.validMoves)  # wK is under attack
+        self.assertNotIn(whiteRightRookCastling, self.gs.validMoves)
+
+        self.gs.setWhiteToMove(False)
+        self.assertIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertIn(blackLeftRookCastling, self.gs.validMoves)
+
+        self.gs.setBoard([
+            ["bR", "--", "--", "--", "bK", "--", "--", "bR"],
+            ["bp", "bp", "bp", "bB", "bB", "bp", "bp", "wR"], # col 7: wp changed to wR
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.gs.setWhiteToMove(True)
+        self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertIn(whiteRightRookCastling, self.gs.validMoves)
+
+        self.gs.setWhiteToMove(False)
+        self.assertNotIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertIn(blackLeftRookCastling, self.gs.validMoves)
+
+
+        self.gs.setBoard([
+            ["bR", "--", "--", "--", "bK", "--", "--", "bR"],
+            ["bp", "bp", "wp", "bB", "bB", "bp", "bp", "bp"], # col 2: bp changed to wp
+            ["bN", "--", "--", "--", "--", "bN", "--", "--"],
+            ["--", "--", "bQ", "bp", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "wp", "--", "--", "--"],
+            ["--", "--", "wN", "wp", "--", "wQ", "--", "wN"],
+            ["wp", "wp", "wp", "wB", "wB", "wp", "wp", "wp"],
+            ["wR", "--", "--", "--", "wK", "--", "--", "wR"]
+        ])
+        self.gs.setWhiteToMove(True)
+        self.assertIn(whiteLeftRookCastling, self.gs.validMoves)
+        self.assertIn(whiteRightRookCastling, self.gs.validMoves)
+
+        self.gs.setWhiteToMove(False)
+        self.assertIn(blackRightRookCastling, self.gs.validMoves)
+        self.assertNotIn(blackLeftRookCastling, self.gs.validMoves)
+
 
 
 if __name__ == '__main__':
