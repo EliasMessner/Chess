@@ -6,10 +6,10 @@ class ChessGUI:
     Generally applicable class for Chess GUI. An instance of this class will hold all the information about the
     current state of the chess game's GUI. This Instance can draw a given gameState onto a pyGame screen.
     """
-    def __init__(self, dimension=8, width=512, height=512, imgPath="../images/", backGroundColor="white"):
+    def __init__(self, dimension=8, width=512, height=None, imgPath="../images/", backGroundColor="white"):
         self.dimension = dimension
         self.width = width
-        self.height = height
+        self.height = height if height is not None else width
         self.sqSize = self.height//self.dimension
         self.backGroundColor = backGroundColor
         self.pointerPiece = "--"
