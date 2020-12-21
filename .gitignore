@@ -2,3 +2,4 @@
 /Lib/
 /Include/
 /pyvenv.cfg
+/src/__pycache__/
