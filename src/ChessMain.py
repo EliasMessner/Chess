@@ -295,7 +295,7 @@ def saveGame(gs, chessClock):
 def loadGame(gs, chessClock):
     Tk().withdraw()
     filepath = askopenfilename(filetypes=[("JSON Files", "*.json")])
-    if filepath is None:
+    if filepath is None or filepath == "":
         return
     jsonData = None
     with open(filepath, 'r') as file:
