@@ -59,7 +59,7 @@ def main():
     """
     global FONT, BLIT_CHECKMATE, BLIT_CHECK, BLIT_STALEMATE, showPossibleMoves_checkBox, toddlerChess_checkBox, \
         set_minutes_spinner, start_clock_btn, saveButton, loadButton
-    chessGUI = ChessGUI()
+    chessGUI = ChessGUI(whiteFieldColor="lightyellow2", blackFieldColor="sandybrown")
     p.init()
     FONT = p.font.SysFont("monospace", 20, bold=True)
     p.display.set_caption("Chess")
