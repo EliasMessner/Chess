@@ -68,9 +68,11 @@ def main():
     screen.fill(p.Color(chessGUI.backGroundColor))
     gs = ChessEngine.GameState()
     running = True
-    player_clicks = []  # two  tuples: [(6, 4), (4, 4)]
+    playerClicks = []  # two  tuples: [(6, 4), (4, 4)]
     initializeControlWidgets()
     chessClock = ChessClock((7*60, 7*60), gs.whiteToMove)
+
+    handleIfCheck(gs, chessGUI)
 
     while running:
         for e in p.event.get():
@@ -102,43 +104,39 @@ def main():
                 else:
                     (col, row) = chessGUI.getSquareUnderCursor()
                     allyColor = 'w' if gs.whiteToMove else 'b'
-                    player_clicks.append((col, row))
-                    if len(player_clicks) == 1:  # first click
+                    playerClicks.append((col, row))
+                    if len(playerClicks) == 1:  # first click
                         # unless it's toddler chess, break if player clicked on something other than an allied piece
                         if gs.getPieceAt(col, row)[0] != allyColor and not toddlerChess_checkBox.check:
-                            player_clicks = []
+                            playerClicks = []
                             break
                         chessGUI.pointerPiece = gs.getPieceAt(col, row)
                         # highlight the clicked field
                         chessGUI.addHighlighting((col, row), "black")
-                    elif len(player_clicks) == 2:  # second click
-                        chessGUI.removeHighlightings()
-                        if player_clicks[0] != player_clicks[1]:
-                            moveToBeMade = None
+                    elif len(playerClicks) == 2:  # second click
+                        chessGUI.removeHighlightings("black")
+                        if playerClicks[0] != playerClicks[1]:
                             if not toddlerChess_checkBox.check:
-                                # validate the move:
-                                for move in gs.validMoves:
-                                    if move == player_clicks:
-                                        moveToBeMade = move
-                                        break
+                                moveToBeMade = validateMove(playerClicks, gs.validMoves)
                             else: # toddlerchess
-                                moveToBeMade = ChessEngine.Move(player_clicks[0], player_clicks[1], gs)
+                                moveToBeMade = ChessEngine.Move(playerClicks[0], playerClicks[1], gs)
                             if moveToBeMade is not None:
+                                chessGUI.removeHighlightings("red")
                                 makeMoveSafe(gs, moveToBeMade, chessClock, chessGUI)  # make move and switch players
                                 print(moveToBeMade)
                         #  reset the variables
-                        player_clicks = []
+                        playerClicks = []
                         chessGUI.pointerPiece = "--"
 
             elif e.type == p.MOUSEMOTION:
                 if not chessGUI.cursorOnBoard():
                     continue
                 (col, row) = chessGUI.getSquareUnderCursor()
-                if len(player_clicks) == 0:
-                    chessGUI.removeHighlightings(p.Color("green"))
+                if len(playerClicks) == 0:
+                    chessGUI.removeHighlightings("green")
                     if showPossibleMoves_checkBox.check:
                         validMoves = gs.getValidMoves((col, row))
-                        chessGUI.addHighlightedMoves(validMoves, p.Color("green"), fromSquareHighlight=False)
+                        chessGUI.addHighlightings([move.toSq for move in validMoves], "green")
                     continue
 
             elif e.type == p.KEYDOWN:
@@ -150,8 +148,26 @@ def main():
 
         clock.tick(MAX_FPS)
         p.display.flip()
-        chessGUI.drawGameState(screen, gs, p.mouse.get_pos())
+        chessGUI.drawGameState(screen, gs.board, p.mouse.get_pos())
         drawControlWidgets(screen, chessClock, gs.whiteToMove)
+
+
+def validateMove(playerClicks, validMoves):
+    """
+    Checks if chosen fields represent a move in valid moves and returns this move if yes, else returns None
+    :param playerClicks: the fields chosen by two clicks
+    :type playerClicks: Iterable of two tuples with each two ints i.e. [(int, int), (int, int)]
+    :param validMoves: the valid moves
+    :type validMoves: Iterable of ChessEngine.Move Objects
+    :return: The chosen valid move or None if no such exists
+    :rtype: ChessEngine.Move
+    """
+    moveToBeMade = None
+    for move in validMoves:
+        if move == playerClicks:
+            moveToBeMade = move
+            break
+    return moveToBeMade
 
 
 def makeMoveSafe(gs, move, chessClock, chessGUI):
@@ -164,11 +180,6 @@ def undoMoveSafe(gs, chessClock, chessGUI):
     gs.undoMove()
     handleIfCheck(gs, chessGUI)
     chessClock.switchPlayer()
-
-
-def drawMoveLog(screen):
-    # TODO
-    pass
 
 
 def drawControlWidgets(screen, chessClock, whiteToMove):
@@ -204,7 +215,7 @@ def handleIfCheck(gs, chessGUI):
     p1CheckingMoves = gs.getAttackingMoves(currentPlayer=False, pieceType='K')  # the moves of enemy that check current player
     if len(p1CheckingMoves) != 0:  # check or checkmate
         # highlight all the player2 kings that are under attack
-        chessGUI.addHighlightedMoves(p1CheckingMoves, color=p.Color("red"), fromSquareHighlight=False)
+        chessGUI.addHighlightings([move.toSq for move in p1CheckingMoves], "red")
         if gs.isCheckmate():
             chess_clock_running = False
             CHECKMATE = True
